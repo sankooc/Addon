@@ -46,7 +46,6 @@ function PoolManager:InitializeNewFrame(frame)
     frame.Icon:ClearAllPoints()
     frame.Text:ClearAllPoints()
     frame.Icon:SetPoint("LEFT", frame, -15, 0)
-    frame.Text:SetPoint("CENTER")
 
     -- Clear any scripts inherited from frame template
     frame:UnregisterAllEvents()
@@ -69,11 +68,3 @@ end
     print(format("Created %d frames in total.", framesCreated))
     print(format("Currently active frames: %d.", framesActive))
 end]]
-
-if date("%d.%m") == "01.04" then -- April Fools :)
-    C_Timer.After(1800, function()
-        if not UnitIsDeadOrGhost("player") then
-            DoEmote("fart")
-        end
-    end)
-end

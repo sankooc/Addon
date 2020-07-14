@@ -15,11 +15,6 @@ local function curr()
 	return TBT_CURRENT_TRADE;
 end
 
-local function view(arg)
-	for k,v in pairs(arg) do
-	  print(k, v)
-	end
-end  
 function TradeLog_CreateNewTrade()
 	local trade = {
 		id = nil,
@@ -40,7 +35,7 @@ function TradeLog_CreateNewTrade()
 end
 
 function TradeLog_OnLoad(self)
-	-- print('loadit')
+
 	self:RegisterEvent("ADDON_LOADED");
 	self:RegisterEvent("TRADE_SHOW");
 	self:RegisterEvent("TRADE_CLOSED");
@@ -289,40 +284,15 @@ function TradeLog_OutputLog()
 			hasReceiveAny = true;
 			strReceive = strReceive..TRADE_LOG_ENCHANT..":"..enPlayer
 		end
-		print('0')
-		local function ccc(tss)
-			local count = 0
-			for k, v in ipairs(tss) do
-				if v.name == '魔法晶水' then
-					count = count + v.numItems
-				end
-			end
-			return count
-		end
-		local item = curr()
-		--print(item.id..item.who)
-		--local fff = pcall(ccc, item.targetItems)
-		--print('call flag '..fff)
-		local cout = ccc(item.targetItems)
-		--print('water size')
-		--print(cout)
-		--print(type(cout))
-		if cout > 0 then
-			--print('222')
-			local txt = '感谢大气法爷赏 [魔法晶水] '..tostring(cout)..' 瓶'
-			--print(txt)
-			SendChatMessage(txt,'WHISPER',nil, item.who)
-		end
+
 		if(not hasSendAny and not hasReceiveAny) then
 			DEFAULT_CHAT_FRAME:AddMessage(string.gsub(TRADE_LOG_SUCCESS_NO_EXCHANGE, "%%t", whoLink), 1, 1, 0);
 		else
 			local linkString = "|CFF00B4FF|Htradelog:"..curr().id.."|h["..TRADE_LOG_DETAIL.."]|h|r";
 			if(TradeLogFrame) then
-				print('1')
-				--DEFAULT_CHAT_FRAME:AddMessage(string.gsub(TRADE_LOG_SUCCESS, "%%t", whoLink)..linkString..":", 1, 1, 0);
+				DEFAULT_CHAT_FRAME:AddMessage(string.gsub(TRADE_LOG_SUCCESS, "%%t", whoLink)..linkString..":", 1, 1, 0);
 			else
-				print('2')
-				--DEFAULT_CHAT_FRAME:AddMessage(string.gsub(TRADE_LOG_SUCCESS, "%%t", whoLink)..TRADE_LOG_DETAIL..":", 1, 1, 0);
+				DEFAULT_CHAT_FRAME:AddMessage(string.gsub(TRADE_LOG_SUCCESS, "%%t", whoLink)..TRADE_LOG_DETAIL..":", 1, 1, 0);
 			end
 			if(hasSendAny) then
 				DEFAULT_CHAT_FRAME:AddMessage("("..TRADE_LOG_HANDOUT..") "..strSend, 1, 0.8, 0.8);
