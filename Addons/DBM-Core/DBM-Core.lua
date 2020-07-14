@@ -71,9 +71,9 @@ local function showRealDate(curseDate)
 end
 
 DBM = {
-	Revision = parseCurseDate("20200623122558"),
-	DisplayVersion = "1.13.51", -- the string that is shown as version
-	ReleaseRevision = releaseDate(2020, 6, 23) -- the date of the latest stable version that is available, optionally pass hours, minutes, and seconds for multiple releases in one day
+	Revision = parseCurseDate("20200714153956"),
+	DisplayVersion = "1.13.53", -- the string that is shown as version
+	ReleaseRevision = releaseDate(2020, 7, 14) -- the date of the latest stable version that is available, optionally pass hours, minutes, and seconds for multiple releases in one day
 }
 DBM.HighestRelease = DBM.ReleaseRevision --Updated if newer version is detected, used by update nags to reflect critical fixes user is missing on boss pulls
 
@@ -129,10 +129,10 @@ DBM.DefaultOptions = {
 	SpecialWarningSound4 = "Interface\\AddOns\\DBM-Core\\sounds\\ClassicSupport\\HoodWolfTransformPlayer01.ogg",
 	SpecialWarningSound5 = "Interface\\AddOns\\DBM-Core\\sounds\\ClassicSupport\\LOA_NAXX_AGGRO02.ogg",
 	ModelSoundValue = "Short",
-	CountdownVoice = "VP:Yike",					--bf@178.com
-	CountdownVoice2 = "VP:Yike",				--bf@178.com
-	CountdownVoice3 = "VP:Yike",				--bf@178.com
-	ChosenVoicePack = "Yike",					--bf@178.com
+	CountdownVoice = "Corsica",
+	CountdownVoice2 = "Kolt",
+	CountdownVoice3 = "Smooth",
+	ChosenVoicePack = "None",
 	VoiceOverSpecW2 = "DefaultOnly",
 	AlwaysPlayVoice = false,
 	EventSoundVictory2 = "None",
@@ -153,7 +153,7 @@ DBM.DefaultOptions = {
 	WarningAlphabetical = true,
 	WarningShortText = true,
 	StripServerName = true,
-	ShowAllVersions = false,					--bf@178.com
+	ShowAllVersions = true,
 	ShowReminders = true,
 	ShowPizzaMessage = true,
 	ShowEngageMessage = true,
@@ -426,7 +426,7 @@ local dataBroker
 local voiceSessionDisabled = false
 local handleSync
 
-local fakeBWVersion, fakeBWHash = 9, "4bfc8af"
+local fakeBWVersion, fakeBWHash = 14, "42eb186"
 local bwVersionResponseString = "V^%d^%s"
 
 local enableIcons = true -- set to false when a raid leader or a promoted player has a newer version of DBM
@@ -457,10 +457,6 @@ local LD
 if LibStub("LibDurability", true) then
 	LD = LibStub("LibDurability")
 end
-local ThreatLib2
-if LibStub("LibThreatClassic2", true) and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
-	ThreatLib2 = LibStub("LibThreatClassic2")
-end
 
 --------------------------------------------------------
 --  Cache frequently used global variables in locals  --
@@ -483,11 +479,7 @@ local UnitExists, UnitIsDead, UnitIsFriend, UnitIsUnit = UnitExists, UnitIsDead,
 local GetSpellInfo, GetDungeonInfo, GetSpellTexture, GetSpellCooldown = GetSpellInfo, GetDungeonInfo, GetSpellTexture, GetSpellCooldown
 --local EJ_GetEncounterInfo, EJ_GetCreatureInfo, EJ_GetSectionInfo, GetSectionIconFlags = EJ_GetEncounterInfo, EJ_GetCreatureInfo, C_EncounterJournal.GetSectionInfo, C_EncounterJournal.GetSectionIconFlags
 local GetInstanceInfo = GetInstanceInfo
-local UnitDetailedThreatSituation = UnitDetailedThreatSituation or ThreatLib2 and function(unit, mob)
-	return ThreatLib2:UnitDetailedThreatSituation(unit, mob)
-end or function(unit, mob)
-	return false, 0--If threatlib failure (shouldn't happen, but if user screws with it, UnitDetailedThreatSituation will just fail silently with not tanking
-end
+local UnitDetailedThreatSituation = UnitDetailedThreatSituation
 local UnitIsGroupLeader, UnitIsGroupAssistant = UnitIsGroupLeader, UnitIsGroupAssistant
 local PlaySoundFile, PlaySound = PlaySoundFile, PlaySound
 local Ambiguate = Ambiguate
@@ -821,7 +813,7 @@ do
 		else
 			if raid[args.destName] then--Unit in group, friendly
 				return false
-			else
+			else--Could still fail for pets since they wouldn't be in raid nor is there GUID stored
 				return true
 			end
 		end
@@ -2222,7 +2214,7 @@ do
 			if type(hudType) == "string" and hudType:trim() ~= "" then
 				if hudType:upper() == "HIDE" then
 					for name, _ in pairs(trackedHudMarkers) do
-						DBMHudMap:FreeEncounterMarkerByTarget(12345, name)
+						DBM.HudMap:FreeEncounterMarkerByTarget(12345, name)
 						trackedHudMarkers[name] = nil
 					end
 					return
@@ -2251,8 +2243,8 @@ do
 				if hudType:upper() == "ARROW" then
 					local _, targetClass = UnitClass(uId)
 					local color2 = RAID_CLASS_COLORS[targetClass]
-					local m1 = DBMHudMap:RegisterRangeMarkerOnPartyMember(12345, "party", playerName, 0.1, hudDuration, 0, 1, 0, 1, nil, false):Appear()
-					local m2 = DBMHudMap:RegisterRangeMarkerOnPartyMember(12345, "party", targetName, 0.75, hudDuration, color2.r, color2.g, color2.b, 1, nil, false):Appear()
+					local m1 = DBM.HudMap:RegisterRangeMarkerOnPartyMember(12345, "party", playerName, 0.1, hudDuration, 0, 1, 0, 1, nil, false):Appear()
+					local m2 = DBM.HudMap:RegisterRangeMarkerOnPartyMember(12345, "party", targetName, 0.75, hudDuration, color2.r, color2.g, color2.b, 1, nil, false):Appear()
 					trackedHudMarkers[playerName] = true
 					trackedHudMarkers[targetName] = true
 					m2:EdgeTo(m1, nil, hudDuration, 0, 1, 0, 1)
@@ -2260,23 +2252,23 @@ do
 				elseif hudType:upper() == "DOT" then
 					local _, targetClass = UnitClass(uId)
 					local color2 = RAID_CLASS_COLORS[targetClass]
-					DBMHudMap:RegisterRangeMarkerOnPartyMember(12345, "party", targetName, 0.75, hudDuration, color2.r, color2.g, color2.b, 1, nil, false):Appear()
+					DBM.HudMap:RegisterRangeMarkerOnPartyMember(12345, "party", targetName, 0.75, hudDuration, color2.r, color2.g, color2.b, 1, nil, false):Appear()
 					trackedHudMarkers[targetName] = true
 					success = true
 				elseif hudType:upper() == "GREEN" then
-					DBMHudMap:RegisterRangeMarkerOnPartyMember(12345, "highlight", targetName, 3.5, hudDuration, 0, 1, 0, 0.5, nil, false):Pulse(0.5, 0.5)
+					DBM.HudMap:RegisterRangeMarkerOnPartyMember(12345, "highlight", targetName, 3.5, hudDuration, 0, 1, 0, 0.5, nil, false):Pulse(0.5, 0.5)
 					trackedHudMarkers[targetName] = true
 					success = true
 				elseif hudType:upper() == "RED" then
-					DBMHudMap:RegisterRangeMarkerOnPartyMember(12345, "highlight", targetName, 3.5, hudDuration, 1, 0, 0, 0.5, nil, false):Pulse(0.5, 0.5)
+					DBM.HudMap:RegisterRangeMarkerOnPartyMember(12345, "highlight", targetName, 3.5, hudDuration, 1, 0, 0, 0.5, nil, false):Pulse(0.5, 0.5)
 					trackedHudMarkers[targetName] = true
 					success = true
 				elseif hudType:upper() == "YELLOW" then
-					DBMHudMap:RegisterRangeMarkerOnPartyMember(12345, "highlight", targetName, 3.5, hudDuration, 1, 1, 0, 0.5, nil, false):Pulse(0.5, 0.5)
+					DBM.HudMap:RegisterRangeMarkerOnPartyMember(12345, "highlight", targetName, 3.5, hudDuration, 1, 1, 0, 0.5, nil, false):Pulse(0.5, 0.5)
 					trackedHudMarkers[targetName] = true
 					success = true
 				elseif hudType:upper() == "BLUE" then
-					DBMHudMap:RegisterRangeMarkerOnPartyMember(12345, "highlight", targetName, 3.5, hudDuration, 0, 0, 1, 0.5, nil, false):Pulse(0.5, 0.5)
+					DBM.HudMap:RegisterRangeMarkerOnPartyMember(12345, "highlight", targetName, 3.5, hudDuration, 0, 0, 1, 0.5, nil, false):Pulse(0.5, 0.5)
 					trackedHudMarkers[targetName] = true
 					success = true
 				elseif hudType:upper() == "ICON" then
@@ -2286,7 +2278,7 @@ do
 						return
 					end
 					local iconString = DBM:IconNumToString(icon):lower()
-					DBMHudMap:RegisterRangeMarkerOnPartyMember(12345, iconString, targetName, 3.5, hudDuration, 1, 1, 1, 0.5, nil, false):Pulse(0.5, 0.5)
+					DBM.HudMap:RegisterRangeMarkerOnPartyMember(12345, iconString, targetName, 3.5, hudDuration, 1, 1, 1, 0.5, nil, false):Pulse(0.5, 0.5)
 					trackedHudMarkers[targetName] = true
 					success = true
 				else
@@ -2425,7 +2417,7 @@ do
 	end
 	SlashCmdList["DBMHUDAR"] = function(msg)
 		local r = tonumber(msg) or 10
-		DBMHudMap:ToggleHudar(r)
+		DBM.HudMap:ToggleHudar(r)
 	end
 	SlashCmdList["DBMRRANGE"] = function(msg)
 		local r = tonumber(msg) or 10
@@ -3313,7 +3305,7 @@ function DBM:LoadModOptions(modId, inCombat, first, force)
 			--Why are saved options cleaned twice?
 			if not inCombat then
 				for option, _ in pairs(savedOptions[id][profileNum]) do
-					if (mod.DefaultOptions[option] == nil) and not (option:find("talent") or option:find("FastestClear")) then
+					if (mod.DefaultOptions[option] == nil) and not (option:find("talent") or option:find("FastestClear") or option:find("CVAR") or option:find("RestoreSetting")) then
 						savedOptions[id][profileNum][option] = nil
 					elseif mod.DefaultOptions[option] and (type(mod.DefaultOptions[option]) == "table") then--recover broken dropdown option
 						if savedOptions[id][profileNum][option] and (type(savedOptions[id][profileNum][option]) == "boolean") then
@@ -3371,7 +3363,7 @@ function DBM:LoadModOptions(modId, inCombat, first, force)
 	--Why are saved options cleaned twice?
 	if not inCombat then
 		for id, _ in pairs(savedOptions) do
-			if not existId[id] and not (id:find("talent") or id:find("FastestClear")) then
+			if not existId[id] and not (id:find("talent") or id:find("FastestClear") or id:find("CVAR") or id:find("RestoreSetting")) then
 				savedOptions[id] = nil
 			end
 		end
@@ -3936,7 +3928,7 @@ do
 		self:LoadModsOnDemand("mapId", mapID)
 		if DBM:HasMapRestrictions() then
 			DBM.Arrow:Hide()
-			DBMHudMap:Disable()
+			DBM.HudMap:Disable()
 			if DBM.RangeCheck:IsRadarShown() then
 				DBM.RangeCheck:Hide(true)
 			end
@@ -3965,7 +3957,7 @@ do
 		self:Schedule(5, SecondaryLoadCheck, self)
 		if DBM:HasMapRestrictions() then
 			DBM.Arrow:Hide()
-			DBMHudMap:Disable()
+			DBM.HudMap:Disable()
 			if DBM.RangeCheck:IsRadarShown() then
 				DBM.RangeCheck:Hide(true)
 			end
@@ -4448,16 +4440,14 @@ do
 					AddMsg(DBM, L.UPDATEREMINDER_HEADER:match("([^\n]*)"))
 					AddMsg(DBM, L.UPDATEREMINDER_HEADER:match("\n(.*)"):format(displayVersion, showRealDate(version)))
 					showConstantReminder = 1
-				elseif not noRaid and #newerVersionPerson == 3 and updateNotificationDisplayed < 3 then--The following code requires at least THREE people to send that higher revision. That should be more than adaquate
+				elseif not noRaid and #newerVersionPerson == 3 and raid[newerVersionPerson[1]] and raid[newerVersionPerson[2]] and raid[newerVersionPerson[3]] and updateNotificationDisplayed < 3 then--The following code requires at least THREE people to send that higher revision. That should be more than adaquate
 					--Disable if revision grossly out of date even if not major patch.
-					if raid[newerVersionPerson[1]] and raid[newerVersionPerson[2]] and raid[newerVersionPerson[3]] then
-						local revDifference = mmin(((raid[newerVersionPerson[1]].revision or 0) - DBM.Revision), ((raid[newerVersionPerson[2]].revision or 0) - DBM.Revision), ((raid[newerVersionPerson[3]].revision or 0) - DBM.Revision))
-						if revDifference > 100000000 then--Approx 1 month old 20190416172622
-							if updateNotificationDisplayed < 3 then
-								updateNotificationDisplayed = 3
-								AddMsg(DBM, L.UPDATEREMINDER_DISABLE)
-								DBM:Disable(true)
-							end
+					local revDifference = mmin(((raid[newerVersionPerson[1]].revision or 0) - DBM.Revision), ((raid[newerVersionPerson[2]].revision or 0) - DBM.Revision), ((raid[newerVersionPerson[3]].revision or 0) - DBM.Revision))
+					if revDifference > 100000000 then--Approx 1 month old 20190416172622
+						if updateNotificationDisplayed < 3 then
+							updateNotificationDisplayed = 3
+							AddMsg(DBM, L.UPDATEREMINDER_DISABLE)
+							DBM:Disable(true)
 						end
 					--Disable if out of date and it's a major patch.
 					elseif not testBuild and dbmToc < wowTOC then
@@ -4669,7 +4659,7 @@ do
 				if IsInInstance() then return end--Simple filter, if you are inside an instance, just filter it, if not in instance, good to go.
 				--difficulty = tonumber(difficulty)--Will be used in WoTLK
 				modId = tonumber(modId)
-				local bossName = modId and EJ_GetEncounterInfo and EJ_GetEncounterInfo(modId) or name or L.UNKNOWN
+				local bossName = modId and (EJ_GetEncounterInfo and EJ_GetEncounterInfo(modId) or DBM:GetModLocalization(modId).general.name) or name or L.UNKNOWN
 				DBM:AddMsg(L.GUILD_COMBAT_STARTED:format(bossName))
 			end
 		end
@@ -4681,7 +4671,7 @@ do
 				if IsInInstance() then return end--Simple filter, if you are inside an instance, just filter it, if not in instance, good to go.
 				--difficulty = tonumber(difficulty)--Will be used in WoTLK
 				modId = tonumber(modId)
-				local bossName = modId and EJ_GetEncounterInfo and EJ_GetEncounterInfo(modId) or name or L.UNKNOWN
+				local bossName = modId and (EJ_GetEncounterInfo and EJ_GetEncounterInfo(modId) or DBM:GetModLocalization(modId).general.name) or name or L.UNKNOWN
 				if wipe == "1" then
 					DBM:AddMsg(L.GUILD_COMBAT_ENDED_AT:format(bossName, wipeHP, time))
 				else
@@ -4696,7 +4686,7 @@ do
 			lastBossEngage[modId..realm] = GetTime()
 			if realm == playerRealm and DBM.Options.WorldBossAlert and not IsEncounterInProgress() then
 				modId = tonumber(modId)--If it fails to convert into number, this makes it nil
-				local bossName = modId and EJ_GetEncounterInfo and EJ_GetEncounterInfo(modId) or name or L.UNKNOWN
+				local bossName = modId and (EJ_GetEncounterInfo and EJ_GetEncounterInfo(modId) or DBM:GetModLocalization(modId).general.name) or name or L.UNKNOWN
 				DBM:AddMsg(L.WORLDBOSS_ENGAGED:format(bossName, floor(health), sender))
 			end
 		end
@@ -4707,27 +4697,25 @@ do
 			lastBossDefeat[modId..realm] = GetTime()
 			if realm == playerRealm and DBM.Options.WorldBossAlert and not IsEncounterInProgress() then
 				modId = tonumber(modId)--If it fails to convert into number, this makes it nil
-				local bossName = modId and EJ_GetEncounterInfo and EJ_GetEncounterInfo(modId) or name or L.UNKNOWN
+				local bossName = modId and (EJ_GetEncounterInfo and EJ_GetEncounterInfo(modId) or DBM:GetModLocalization(modId).general.name) or name or L.UNKNOWN
 				DBM:AddMsg(L.WORLDBOSS_DEFEATED:format(bossName, sender))
 			end
 		end
 
 		syncHandlers["WBA"] = function(sender, bossName, faction, spellId, time, ver)
 			DBM:Debug("WBA sync recieved")
-			if not ver or not (ver == "3") then return end--Ignore old versions
+			if not ver or not (ver == "4") then return end--Ignore old versions
 			if lastBossEngage[bossName..faction] and (GetTime() - lastBossEngage[bossName..faction] < 30) then return end--We recently got a sync about this buff on this realm, so do nothing.
 			lastBossEngage[bossName..faction] = GetTime()
 			if DBM.Options.WorldBuffAlert and #inCombat == 0 then
 				DBM:Debug("WBA sync processing")
 				local factionText = faction == "Alliance" and FACTION_ALLIANCE or faction == "Horde" and FACTION_HORDE or L.BOTH
-				local buffName = DBM:GetSpellInfo(tonumber(spellId) or 0) or L.UNKNOWN
-				DBM:AddMsg(L.WORLDBUFF_STARTED:format(buffName, factionText, sender))
+				local buffName, _, buffIcon = DBM:GetSpellInfo(tonumber(spellId) or 0)
+				DBM:AddMsg(L.WORLDBUFF_STARTED:format(buffName or L.UNKNOWN, factionText, sender))
 				DBM:PlaySound(DBM.Options.RaidWarningSound, true)
-				if DBM.Options.DebugMode or (time ~= 7 and time ~= 27) then
-					local timer = tonumber(time)
-					if timer then
-						DBM.Bars:CreateBar(timer, buffName, 136106)
-					end
+				time = tonumber(time)
+				if time then
+					DBM.Bars:CreateBar(time, buffName or L.UNKNOWN, buffIcon or 136106)
 				end
 			end
 		end
@@ -4740,7 +4728,7 @@ do
 			if realm == playerRealm and DBM.Options.WorldBossAlert and #inCombat == 0 then
 				local _, toonName = BNGetGameAccountInfo(sender)
 				modId = tonumber(modId)--If it fails to convert into number, this makes it nil
-				local bossName = modId and EJ_GetEncounterInfo and EJ_GetEncounterInfo(modId) or name or L.UNKNOWN
+				local bossName = modId and (EJ_GetEncounterInfo and EJ_GetEncounterInfo(modId) or DBM:GetModLocalization(modId).general.name) or name or L.UNKNOWN
 				DBM:AddMsg(L.WORLDBOSS_ENGAGED:format(bossName, floor(health), toonName))
 			end
 		end
@@ -4752,27 +4740,25 @@ do
 			if realm == playerRealm and DBM.Options.WorldBossAlert and #inCombat == 0 then
 				local _, toonName = BNGetGameAccountInfo(sender)
 				modId = tonumber(modId)--If it fails to convert into number, this makes it nil
-				local bossName = modId and EJ_GetEncounterInfo and EJ_GetEncounterInfo(modId) or name or L.UNKNOWN
+				local bossName = modId and (EJ_GetEncounterInfo and EJ_GetEncounterInfo(modId) or DBM:GetModLocalization(modId).general.name) or name or L.UNKNOWN
 				DBM:AddMsg(L.WORLDBOSS_DEFEATED:format(bossName, toonName))
 			end
 		end
 
 		whisperSyncHandlers["WBA"] = function(sender, bossName, faction, spellId, time, ver)
 			DBM:Debug("WBA sync recieved")
-			if not ver or not (ver == "3") then return end--Ignore old versions
+			if not ver or not (ver == "4") then return end--Ignore old versions
 			if lastBossEngage[bossName..faction] and (GetTime() - lastBossEngage[bossName..faction] < 30) then return end--We recently got a sync about this buff on this realm, so do nothing.
 			lastBossEngage[bossName..faction] = GetTime()
 			if DBM.Options.WorldBuffAlert and #inCombat == 0 then
 				DBM:Debug("WBA sync processing")
 				local factionText = faction == "Alliance" and FACTION_ALLIANCE or faction == "Horde" and FACTION_HORDE or L.BOTH
-				local buffName = DBM:GetSpellInfo(tonumber(spellId) or 0) or L.UNKNOWN
-				DBM:AddMsg(L.WORLDBUFF_STARTED:format(buffName, factionText, sender))
+				local buffName, _, buffIcon = DBM:GetSpellInfo(tonumber(spellId) or 0)
+				DBM:AddMsg(L.WORLDBUFF_STARTED:format(buffName or L.UNKNOWN, factionText, sender))
 				DBM:PlaySound(DBM.Options.RaidWarningSound, true)
-				if DBM.Options.DebugMode or (time ~= 7 and time ~= 27) then
-					local timer = tonumber(time)
-					if timer then
-						DBM.Bars:CreateBar(timer, buffName, 136106)
-					end
+				time = tonumber(time)
+				if time then
+					DBM.Bars:CreateBar(time, buffName or L.UNKNOWN, buffIcon or 136106)
 				end
 			end
 		end
@@ -5608,20 +5594,29 @@ do
 		end
 		if not IsInInstance() then
 			if msg:find(L.WORLD_BUFFS.hordeOny) then
-				SendWorldSync(self, "WBA", "Onyxia\tHorde\t22888\t15\t3")
+				SendWorldSync(self, "WBA", "Onyxia\tHorde\t22888\t15\t4")
 				DBM:Debug("L.WORLD_BUFFS.hordeOny detected")
 			elseif msg:find(L.WORLD_BUFFS.allianceOny) then
-				SendWorldSync(self, "WBA", "Onyxia\tAlliance\t22888\t15\t3")
+				SendWorldSync(self, "WBA", "Onyxia\tAlliance\t22888\t15\t4")
 				DBM:Debug("L.WORLD_BUFFS.allianceOny detected")
 			elseif msg:find(L.WORLD_BUFFS.hordeNef) then
-				SendWorldSync(self, "WBA", "Nefarian\tHorde\t22888\t16\t3")
+				SendWorldSync(self, "WBA", "Nefarian\tHorde\t22888\t16\t4")
 				DBM:Debug("L.WORLD_BUFFS.hordeNef detected")
 			elseif msg:find(L.WORLD_BUFFS.allianceNef) then
-				SendWorldSync(self, "WBA", "Nefarian\tAlliance\t22888\t16\t3")
+				SendWorldSync(self, "WBA", "Nefarian\tAlliance\t22888\t16\t4")
 				DBM:Debug("L.WORLD_BUFFS.allianceNef detected")
 			elseif msg:find(L.WORLD_BUFFS.rendHead) then
-				SendWorldSync(self, "WBA", "rendBlackhand\tHorde\t16609\t7\t3")
+				SendWorldSync(self, "WBA", "rendBlackhand\tHorde\t16609\t7\t4")
 				DBM:Debug("L.WORLD_BUFFS.rendHead detected")
+			elseif msg:find(L.WORLD_BUFFS.zgHeartYojamba) then
+				-- zg buff transcripts https://gist.github.com/venuatu/18174f0e98759f83b9834574371b8d20
+				-- 28.58, 28.67, 27.77, 29.39, 28.67, 29.03, 28.12, 28.19, 29.61
+				SendWorldSync(self, "WBA", "Zandalar\tBoth\t24425\t28\t4")
+				DBM:Debug("L.WORLD_BUFFS.zgHeartYojamba detected")
+			elseif msg:find(L.WORLD_BUFFS.zgHeartBooty) then
+				-- 48.7, 49.76, 50.64, 49.42, 49.8, 50.67, 50.94, 51.06
+				SendWorldSync(self, "WBA", "Zandalar\tBoth\t24425\t49\t4")
+				DBM:Debug("L.WORLD_BUFFS.zgHeartBooty detected")
 			end
 		end
 		return onMonsterMessage(self, "yell", msg)
@@ -5660,7 +5655,8 @@ do
 	function DBM:CHAT_MSG_MONSTER_SAY(msg)
 		if not IsInInstance() then
 			if msg:find(L.WORLD_BUFFS.zgHeart) then
-				SendWorldSync(self, "WBA", "Zandalar\tBoth\t24425\t27\t3")
+				-- 51.01 51.82 51.85 51.53
+				SendWorldSync(self, "WBA", "Zandalar\tBoth\t24425\t51\t4")
 			end
 		end
 		return onMonsterMessage(self, "say", msg)
@@ -5956,7 +5952,7 @@ do
 					end
 				end
 				--show enage message
-				if self.Options.ShowEngageMessage then
+				if self.Options.ShowEngageMessage and not mod.noStatistics then
 					if mod.ignoreBestkill and (savedDifficulty == "worldboss") then--Should only be true on in progress field bosses, not in progress raid bosses we did timer recovery on.
 						self:AddMsg(L.COMBAT_STARTED_IN_PROGRESS:format(difficultyText..name))
 					else
@@ -6058,7 +6054,7 @@ do
 				self:Schedule(3, mod.Stop, mod) -- Remove accident started timers.
 				mod.inCombatOnlyEventsRegistered = nil
 				if mod.OnCombatEnd then
-					self:Schedule(3, mod.OnCombatEnd, mod, wipe) -- Remove accidentally shown frames
+					self:Schedule(3, mod.OnCombatEnd, mod, wipe, true) -- Remove accidentally shown frames
 				end
 			end
 			if mod.updateInterval then
@@ -7200,7 +7196,7 @@ do
 
 	function DBM:CINEMATIC_START()
 		self:Debug("CINEMATIC_START fired", 2)
-		DBMHudMap:SupressCanvas()
+		DBM.HudMap:SupressCanvas()
 		local isInstance, instanceType = IsInInstance()
 		if not isInstance or self.Options.MovieFilter2 == "Never" or DBM.Options.MovieFilter2 == "OnlyFight" and not IsEncounterInProgress() then return end
 		local currentMapID = C_Map.GetBestMapForUnit("player")
@@ -7215,7 +7211,7 @@ do
 	end
 	function DBM:CINEMATIC_STOP()
 		self:Debug("CINEMATIC_STOP fired", 2)
-		DBMHudMap:UnSupressCanvas()
+		DBM.HudMap:UnSupressCanvas()
 	end
 end
 
@@ -8927,8 +8923,11 @@ do
 			error("NewAnnounce: you must provide announce text", 2)
 			return
 		end
+		if type(text) == "number" then
+			DBM:Debug("|cffff0000NewAnnounce: Non auto localized text cannot be numbers, fix this for "..text)
+		end
 		if type(optionName) == "number" then
-			DBM:Debug("Non auto localized optionNames cannot be numbers, fix this for "..text)
+			DBM:Debug("|cffff0000NewAnnounce: Non auto localized optionNames cannot be numbers, fix this for "..text)
 			optionName = nil
 		end
 		if soundOption and type(soundOption) == "boolean" then
@@ -11332,7 +11331,7 @@ end
 
 function bossModPrototype:SetRevision(revision)
 	revision = parseCurseDate(revision or "")
-	if not revision or revision == "20200623122558" then
+	if not revision or revision == "20200714153956" then
 		-- bad revision: either forgot the svn keyword or using github
 		revision = DBM.Revision
 	end

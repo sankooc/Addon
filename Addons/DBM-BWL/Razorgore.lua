@@ -1,7 +1,7 @@
 local mod	= DBM:NewMod("Razorgore", "DBM-BWL", 1)
 local L		= mod:GetLocalizedStrings()
 
-mod:SetRevision("20200623011525")
+mod:SetRevision("20200710050304")
 mod:SetCreatureID(12435, 99999)--Bogus detection to prevent invalid kill detection if razorgore happens to die in phase 1
 mod:SetEncounterID(610)--BOSS_KILL is valid, but ENCOUNTER_END is not
 mod:DisableEEKillDetection()--So disable only EE
@@ -14,7 +14,7 @@ mod:SetWipeTime(180)--guesswork
 
 mod:RegisterEventsInCombat(
 	"SPELL_CAST_START 22425",
-	"SPELL_CAST_SUCCESS 23040",
+	"SPELL_CAST_SUCCESS 23040 19873",
 	"SPELL_AURA_APPLIED 23023",
 	"CHAT_MSG_MONSTER_EMOTE",
 	"CHAT_MSG_MONSTER_YELL",
@@ -42,10 +42,10 @@ function mod:OnCombatStart(delay)
 	self.vb.phase = 1
 	self.vb.eggsLeft = 30
 	if not self.vb.firstEngageTime then
-		self.vb.firstEngageTime = GetTime()
+		self.vb.firstEngageTime = GetServerTime()
 		if self.Options.FastestClear and self.Options.SpeedClearTimer then
 			--Custom bar creation that's bound to core, not mod, so timer doesn't stop when mod stops it's own timers
-			DBM.Bars:CreateBar(self.Options.FastestClear, DBM_CORE_L.SPEED_CLEAR_TIMER_TEXT)
+			DBM.Bars:CreateBar(self.Options.FastestClear, DBM_CORE_L.SPEED_CLEAR_TIMER_TEXT, "136106")
 		end
 	end
 end
@@ -73,6 +73,7 @@ do
 			warnPhase2:Show()
 			self.vb.phase = 2
 		--This may not be accurate, it depends on how large expanded combat log range is
+		--elseif args.spellId == 19873 then
 		elseif args.spellName == destroyEgg then
 			self.vb.eggsLeft = self.vb.eggsLeft - 1
 			warnEggsLeft:Show(string.format("%d/%d",30-self.vb.eggsLeft,30))

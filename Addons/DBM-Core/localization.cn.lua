@@ -541,7 +541,7 @@ L.AUTO_RRANGE_OPTION_TEXT_SHORT		    = "反转距离监视(%s 码)"
 L.AUTO_INFO_FRAME_OPTION_TEXT		    = "信息框：$spell:%s "
 L.AUTO_INFO_FRAME_OPTION_TEXT2		    = "信息框：战斗总览"
 L.AUTO_READY_CHECK_OPTION_TEXT		    = "当首领开打时播放准备检查的音效（即使没有选定目标）"
-L.AUTO_SPEEDCLEAR_OPTION_TEXT		    = "计时条：最快速度清除 %s "
+L.AUTO_SPEEDCLEAR_OPTION_TEXT		    = "显示 %s 的最快清除计时"
 
 -- New special warnings
 L.MOVE_WARNING_BAR				       = "可拖动的团队警报"
@@ -633,5 +633,7 @@ L.WORLD_BUFFS.hordeOny		 = "部落的人民，奥格瑞玛的居民，来吧，�
 L.WORLD_BUFFS.allianceOny	 = "暴风城的城民和盟友们，今天，有人创造了历史"
 L.WORLD_BUFFS.hordeNef		 = "奈法利安被杀掉了！奥格瑞玛的居民"
 L.WORLD_BUFFS.allianceNef	 = "联盟的人民们，黑石领主已经被干掉了！"
-L.WORLD_BUFFS.zgHeart		 = "夺灵者已经被打败了！我们不再有危险了！"
+L.WORLD_BUFFS.zgHeart		 = "Now, only one step remains to rid us of the Soulflayer's threat"  --Need to collect, with information being updated
+L.WORLD_BUFFS.zgHeartBooty	 = "夺灵者已经被打败了！我们不再有危险了！"
+L.WORLD_BUFFS.zgHeartYojamba = "开始仪式，我的仆从们。我们必须把哈卡完全打回扭曲虚空中！"
 L.WORLD_BUFFS.rendHead		 = "那个假的酋长，雷德·黑手，已经倒下了！"
