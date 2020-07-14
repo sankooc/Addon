@@ -1,0 +1,20 @@
+﻿## Interface: 11304
+## Author: Lag
+## Version: v1.4.7
+## Dependencies: AtlasLootClassic
+## LoadOnDemand: 1
+## Title: AtlasLootClassic |cFFFF0000[Data]|r
+## Title-zhCN: AtlasLoot经典版 |cFFFF0000[数据]|r
+## Title-zhTW: 副本戰利品查詢經典版 |cFFFF0000[數據]|r
+## Notes: AtlasLoot data module
+## Notes-zhCN: AtlasLoot 数据模块
+## Notes-zhTW: 副本戰利品查詢的數據設定。
+## X-Category: Map
+## X-License: GPL v2
+## X-Revision: BigFoot
+
+core.lua
+
+locales.lua
+items.lua
+source.lua

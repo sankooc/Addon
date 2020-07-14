@@ -1,0 +1,20 @@
+## Interface: 11304
+## Title: |cff00aeffCharacterStatsClassic|r
+## Title-zhCN: [大脚][集]人物详细属性
+## Title-zhTW: [大腳][集]人物詳細屬性
+## Notes: |cff00ff00CharacterStatsClassic|r|n|cffbc8f8fAdvanced Character Stats|r
+## Author: Peter Getov
+## Version: 3.3.1
+## SavedVariables: CharacterStatsClassicDB
+## SavedVariablesPerCharacter: CharacterStatsClassicCharacterDB
+## Dependencies: BigFoot
+## X-Revision: BigFoot
+
+Localization\Localization_en.lua
+Localization\Localization_cn.lua
+Localization\Localization_tw.lua
+
+CharacterStatsClassicUI.lua
+CharacterStatsClassicCore.lua
+CharacterStatsClassicUtils.lua
+ClassUtils.lua
