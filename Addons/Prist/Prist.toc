@@ -1,0 +1,7 @@
+﻿## Interface: 11304
+## Title: 空牧师小工具
+## Title-zhCN: 空牧师小工具
+## Author: sankooc
+
+Prist.xml
+ui.lua
