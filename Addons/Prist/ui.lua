@@ -1,17 +1,7 @@
-
--- local AceGUI = LibStub('AceGUI-3.0')
--- local frame = AceGUI:Create("Frame")
--- frame:SetTitle("test")
--- frame:SetWidth(400)
--- frame:SetHeight(400)
--- -- frame:SetAlpha(0.5)
--- frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
--- frame:SetLayout("List")
-
 local username = UnitName('player')
 local userrace = UnitRace('player')
 local userclass = UnitClass('player')
-print(username..userclass)
+-- print(username..userclass)
 
 local function view(arg)
     for k,v in pairs(arg) do
@@ -50,13 +40,23 @@ function moving(frame)
     end)
 end
 
-local ht = 25
+local ht = 22
 local f = CreateFrame("Frame",nil,UIParent)
 -- f:SetFrameStrata("WORLD")
 moving(f)
 f:SetWidth(238)
 f:SetHeight(20)
 setBorder(f)
+local widgetCache = {}
+-- local function aqual (name)
+--     local item = f:CreateTexture(nil, "ARTWORK");
+--     local icon = f:CreateTexture(nil,"ARTWORK")
+--     local fs = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
+--     local ss = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
+--     local  prog = f:CreateTexture(nil, "ARTWORK");
+--     local aag = prog:CreateAnimationGroup()
+--     local aa1 = aag:CreateAnimation("Scale")
+-- end
 function addItem(size, name, spellId, second)
     -- print('add_item', size, name, spellId)
     local item = f:CreateTexture(nil, "ARTWORK");
@@ -77,10 +77,11 @@ function addItem(size, name, spellId, second)
 
     
     local ss = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
-    ss:SetText((second/1000)..'s')
-    ss:SetTextHeight(10)
-    ss:SetTextColor(1, 1, 1)
-    ss:SetPoint("RIGHT",item, -13, 0)
+    -- ss:SetText((second/1000)..'s')
+    ss:SetText('1.2s')
+    ss:SetTextHeight(12)
+    ss:SetTextColor(.7, .7, .7)
+    ss:SetPoint("BOTTOMRIGHT",item, -13, 5)
 
     local  prog = f:CreateTexture(nil, "ARTWORK");
     prog:SetColorTexture(0.09, 0.61, 0.55, .6)
@@ -98,7 +99,7 @@ function addItem(size, name, spellId, second)
     local function clear()
         aag:Stop()
         -- print('----stop')
-        -- icon:SetTexture(nil)
+        icon:SetTexture(nil)
         icon:Hide()
         -- print('icon')
         fs:Hide()
@@ -107,7 +108,10 @@ function addItem(size, name, spellId, second)
         prog:Hide()
         -- print('prog')
         item:Hide()
-        print('item')
+        local numChildren = f:GetNumChildren()
+        local numRegions = f:GetNumRegions()
+        print('d:'..numChildren..'/'..numRegions)
+        -- print('item')
     end
     aa1:SetScript("OnFinished", function()
         f:clearSkill(name)
@@ -149,7 +153,7 @@ function f:rev()
             if exp < dur then
                 local icon = v.icon
                 local per = exp / dur;
-                print(k, icon, per, dur)
+                -- print(k, icon, per, dur)
             end
         end
     end
@@ -179,14 +183,14 @@ function f:indexIs(name)
     return 0
 end
 function f:updateAll()
-    print('update_all')
+    -- print('update_all')
     local inx = 0
     for k,v in pairs(userList) do
         local item = v.item
         item:SetPoint("TOPLEFT",f, 6, -5 - inx * (ht + 2))
         inx = inx + 1
     end
-    print('resize')
+    -- print('resize')
     f:recompute()
 end
 function f:clearSkill(name)
@@ -217,22 +221,6 @@ function f:ch(uname, sname)
         end
         return uname,  cin.icon, cin.dur
     end
-    
-        -- local cin = imx[sname]
-        -- if not cin then
-        --     return
-        -- end
-        -- -- print(srcName, timestamp, _time)
-        -- local cls = UnitClass(srcName)
-        -- print('clean '..srcName)
-        -- f:Add_SKill(srcName, cin.icon, cin.dur)
-        -- userList[srcName] = {
-        --     icon = cin.icon,
-        --     dur = cin.dur,
-        --     cls = cls,
-        --     name = srcName
-        -- }
-        -- addItem(srcName, cin.icon, 1, cin.dur)
     return nil
 end
 function f:Spellan(timestamp, eventtype, ...)
@@ -245,35 +233,6 @@ function f:Spellan(timestamp, eventtype, ...)
         if name then
             f:Add_SKill(name, icon, dur)
         end
-        -- local _time = time()
-        -- print(eventtype, srcGUID, srcName, spellId, sname)
-        -- local cls = UnitClass(srcName)
-        -- if userclass == cls then
-        --     local name, rank, icon, castTime, _, _, sid = GetSpellInfo(sname);
-        --     if not icon then
-        --         return
-        --     end
-        --     if castTime > 0 then
-        --         f:Add_SKill(srcName, icon, castTime)
-        --     end
-        -- end
-        -- local cin = imx[sname]
-        -- if not cin then
-        --     return
-        -- end
-        -- -- print(srcName, timestamp, _time)
-        -- local cls = UnitClass(srcName)
-        -- print('clean '..srcName)
-        -- f:Add_SKill(srcName, cin.icon, cin.dur)
-        -- userList[srcName] = {
-        --     icon = cin.icon,
-        --     dur = cin.dur,
-        --     start = timestamp,
-        --     cls = cls,
-        --     name = srcName
-        -- }
-        -- print('')
-        -- addItem(srcName, cin.icon, 1, cin.dur)
     --   healstart(timestamp, eventtype, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, ...)
     elseif eventtype == 'SPELL_CAST_FAILED' then
         local _, srcGUID, srcName, spellId, spellName = ...
