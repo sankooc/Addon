@@ -8,6 +8,11 @@
 -- frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
 -- frame:SetLayout("List")
 
+local username = UnitName('player')
+local userrace = UnitRace('player')
+local userclass = UnitClass('player')
+print(username..userclass)
+
 local function view(arg)
     for k,v in pairs(arg) do
         print(k, v)
@@ -45,23 +50,23 @@ function moving(frame)
     end)
 end
 
+local ht = 25
 local f = CreateFrame("Frame",nil,UIParent)
 -- f:SetFrameStrata("WORLD")
 moving(f)
 f:SetWidth(238)
-f:SetHeight(150)
+f:SetHeight(20)
 setBorder(f)
-function addItem(name, spellId, percent, second)
-    -- local item = CreateFrame("Frame",nil, f)
-    -- print(name..spellId)
+function addItem(size, name, spellId, second)
+    -- print('add_item', size, name, spellId)
     local item = f:CreateTexture(nil, "ARTWORK");
     item:SetWidth(240)
-    item:SetHeight(25)
+    item:SetHeight(ht)
 
     local icon = f:CreateTexture(nil,"ARTWORK")
     icon:SetTexture(spellId)
-    icon:SetWidth(25)
-    icon:SetHeight(25)
+    icon:SetWidth(ht)
+    icon:SetHeight(ht)
     icon:SetPoint("TOPLEFT",item, 0, 0)
     
     
@@ -70,11 +75,17 @@ function addItem(name, spellId, percent, second)
     fs:SetTextColor(1, 1, 1)
     fs:SetPoint("CENTER",item, 13, 0)
 
+    
+    local ss = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
+    ss:SetText((second/1000)..'s')
+    ss:SetTextHeight(10)
+    ss:SetTextColor(1, 1, 1)
+    ss:SetPoint("RIGHT",item, -13, 0)
 
     local  prog = f:CreateTexture(nil, "ARTWORK");
     prog:SetColorTexture(0.09, 0.61, 0.55, .6)
     prog:SetWidth(10)
-    prog:SetHeight(25)
+    prog:SetHeight(ht)
     prog:SetPoint("TOPLEFT",item, 26, 0)
 
     
@@ -85,17 +96,26 @@ function addItem(name, spellId, percent, second)
     aa1:SetDuration(second/ 1000)
     aa1:SetOrder(2)
     local function clear()
-        icon:SetTexture(nil)
+        aag:Stop()
+        -- print('----stop')
+        -- icon:SetTexture(nil)
         icon:Hide()
+        -- print('icon')
         fs:Hide()
+        ss:Hide()
+        -- print('fs')
         prog:Hide()
+        -- print('prog')
         item:Hide()
+        print('item')
     end
-    aa1:SetScript("OnFinished", clear)
+    aa1:SetScript("OnFinished", function()
+        f:clearSkill(name)
+    end)
     aag:Play()
 
-    item:SetPoint("TOPLEFT",f, 6, -5)
-    return item
+    item:SetPoint("TOPLEFT",f, 6, -5 - size * (ht + 2))
+    return item, clear
 end
 
 f:ClearAllPoints()
@@ -111,8 +131,12 @@ local MatchEvents = {
 }
 local imx = {
     ['快速治疗'] = { icon = '135907', dur = 1500 },
-    ['强效治疗术'] = { icon = '135913', dur = 2500 }
+    ['强效治疗术'] = { icon = '135913', dur = 2500 },
+    ['次级治疗术'] = { icon = '135929', dur = 2500 },
+    ['治疗术'] = { icon = '135916', dur = 2500 },
+    ['治疗祷言'] = { icon = '135943', dur = 3000 },
 }
+
 local userList = {}
 
 function f:rev()
@@ -132,52 +156,131 @@ function f:rev()
 end
 -- view(imx['快速治疗'])
 -- print(timestamp, eventtype, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, spellId, spellNam)
+function f:recompute()
+    local size = table.getn(userList)
+    f:SetWidth(238)
+    local h = math.max(20, 10 + size * (ht + 2))
+    f:SetHeight(h)
+end
 function f:Add_SKill(name, icon, dur)
     -- table.insert(userList, 'a')
+    f:clearSkill(name)
     local size = table.getn(userList)
+    local item, clear = addItem(size, name, icon, dur)
+    table.insert(userList, { name=name, clear=clear, item=item });
+    f:recompute();
+end
+function f:indexIs(name)
+    for k,v in pairs(userList) do
+        if name == v.name then
+            return k
+        end
+    end
+    return 0
+end
+function f:updateAll()
+    print('update_all')
+    local inx = 0
+    for k,v in pairs(userList) do
+        local item = v.item
+        item:SetPoint("TOPLEFT",f, 6, -5 - inx * (ht + 2))
+        inx = inx + 1
+    end
+    print('resize')
+    f:recompute()
+end
+function f:clearSkill(name)
+    local inx = f:indexIs(name);
+    -- print(inx)
+    if inx > 0 then
+        userList[inx].clear()
+        -- print('clearing')
+        table.remove(userList, inx)
+        f:updateAll()
+    end
+end
+
+function f:ch(uname, sname)
+    local cls = UnitClass(uname)
+    if userclass == cls then
+        local name, rank, icon, castTime, _, _, sid = GetSpellInfo(sname);
+        if not icon then
+            return nil
+        end
+        if castTime > 0 then
+            return uname, icon, castTime
+        end
+    elseif cls == '牧师' then
+        local cin = imx[sname]
+        if not cin then
+            return nil
+        end
+        return uname,  cin.icon, cin.dur
+    end
+    
+        -- local cin = imx[sname]
+        -- if not cin then
+        --     return
+        -- end
+        -- -- print(srcName, timestamp, _time)
+        -- local cls = UnitClass(srcName)
+        -- print('clean '..srcName)
+        -- f:Add_SKill(srcName, cin.icon, cin.dur)
+        -- userList[srcName] = {
+        --     icon = cin.icon,
+        --     dur = cin.dur,
+        --     cls = cls,
+        --     name = srcName
+        -- }
+        -- addItem(srcName, cin.icon, 1, cin.dur)
+    return nil
 end
 function f:Spellan(timestamp, eventtype, ...)
-    -- local mth = MatchEvents[eventtype]
-    -- print('acds'..eventtype)
     local tt = {...}
     if eventtype == 'SPELL_CAST_START' then
         -- view(tt)
         local _, srcGUID, srcName, spellId, spellName = ...
         local sname = tt[11]
+        local name, icon, dur = f:ch(srcName, sname)
+        if name then
+            f:Add_SKill(name, icon, dur)
+        end
         -- local _time = time()
         -- print(eventtype, srcGUID, srcName, spellId, sname)
-        local cin = imx[sname]
-        if not cin then
-            return
-        end
-        -- print(srcName, timestamp, _time)
-        local cls = UnitClass(srcName)
-        userList[srcName] = {
-            icon = cin.icon,
-            dur = cin.dur,
-            start = timestamp,
-            cls = cls,
-            name = srcName
-        }
+        -- local cls = UnitClass(srcName)
+        -- if userclass == cls then
+        --     local name, rank, icon, castTime, _, _, sid = GetSpellInfo(sname);
+        --     if not icon then
+        --         return
+        --     end
+        --     if castTime > 0 then
+        --         f:Add_SKill(srcName, icon, castTime)
+        --     end
+        -- end
+        -- local cin = imx[sname]
+        -- if not cin then
+        --     return
+        -- end
+        -- -- print(srcName, timestamp, _time)
+        -- local cls = UnitClass(srcName)
+        -- print('clean '..srcName)
+        -- f:Add_SKill(srcName, cin.icon, cin.dur)
+        -- userList[srcName] = {
+        --     icon = cin.icon,
+        --     dur = cin.dur,
+        --     start = timestamp,
+        --     cls = cls,
+        --     name = srcName
+        -- }
         -- print('')
-        addItem(srcName, cin.icon, 1, cin.dur)
-        -- f:rev()
-        -- local name, rank, icon, castTime, _, _, sid = GetSpellInfo(sname);
-        -- print(name, rank, icon, castTime, sid);
-        -- 快速治疗 135907 1500
-        -- 强效治疗术 135913 2500
-        -- 次级治疗术 135929 2500
-        -- 治疗术 135916 2500
-        -- 治疗祷言 135943 3000
-        -- print(timestamp, eventtype, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, spellId, spellNam)
+        -- addItem(srcName, cin.icon, 1, cin.dur)
     --   healstart(timestamp, eventtype, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, ...)
     elseif eventtype == 'SPELL_CAST_FAILED' then
         local _, srcGUID, srcName, spellId, spellName = ...
         local sname = tt[11]
-        print(eventtype, srcGUID, srcName, spellId, sname)
-        local cin = imx[sname]
-        if not cin then
-            return
+        local aa = f:ch(srcName, sname)
+        if aa then
+            f:clearSkill(srcName);
         end
     end
     -- print(eventtype)
@@ -185,21 +288,20 @@ function f:Spellan(timestamp, eventtype, ...)
     -- print('---')
   end
 function f:UNIT_SPELLCAST_SUCCEEDED(unitID, _, spellID)
-    print(unitID, spellID)
+    -- print(unitID, spellID)
     local name, rank, icon, castTime, _, _, sid = GetSpellInfo(spellID);
-    print(name, rank, icon, castTime, sid);
+    -- print(name, rank, icon, castTime, sid);
 end
 
 function f:COMBAT_LOG_EVENT_UNFILTERED()
     self:Spellan(CombatLogGetCurrentEventInfo());
 end
 
-function f:Update()
-    f:rev()
-    -- print('now')
-end
+-- function f:Update()
+--     f:rev()
+--     -- print('now')
+-- end
 
--- f:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 f:RegisterEvent('COMBAT_LOG_EVENT_UNFILTERED')
 f:SetScript("OnEvent", function(self, event, ...)
         if self[event] then
@@ -214,14 +316,3 @@ f:SetScript("OnEvent", function(self, event, ...)
 -- f:SetScript("OnUpdate", f_Update)
 
 print('ui show')
-
--- local pg = {}
-
--- table.insert(pg, 'a')
--- table.insert(pg, 'b')
--- table.insert(pg, 'c')
--- table.insert(pg, 'd')
--- print(table.getn(pg))
--- table.remove(pg, 2)
--- print(table.getn(pg))
--- view(pg)
