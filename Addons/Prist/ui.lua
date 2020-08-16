@@ -48,75 +48,108 @@ f:SetWidth(238)
 f:SetHeight(20)
 setBorder(f)
 local widgetCache = {}
--- local function aqual (name)
---     local item = f:CreateTexture(nil, "ARTWORK");
---     local icon = f:CreateTexture(nil,"ARTWORK")
---     local fs = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
---     local ss = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
---     local  prog = f:CreateTexture(nil, "ARTWORK");
---     local aag = prog:CreateAnimationGroup()
---     local aa1 = aag:CreateAnimation("Scale")
--- end
+function f:aqual (name)
+    local sst = widgetCache[name]
+    if sst then
+        print('cache')
+        return sst.item, sst.icon, sst.fs, sst.ss, sst.prog, sst.clear, sst.aag, sst.aa1
+    else
+        print('create panel')
+        local item = f:CreateTexture(nil, "ARTWORK");
+        local icon = f:CreateTexture(nil,"ARTWORK")
+        local fs = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
+        local ss = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
+        local prog = f:CreateTexture(nil, "ARTWORK");
+        local aag = prog:CreateAnimationGroup()
+        local aa1 = aag:CreateAnimation("Scale")
+        local function clear()
+            aag:Stop()
+            aag:Finish()
+            icon:SetTexture(nil)
+            icon:Hide()
+            fs:Hide()
+            ss:Hide()
+            prog:Hide()
+            -- print('prog')
+            item:Hide()
+            local numChildren = f:GetNumChildren()
+            local numRegions = f:GetNumRegions()
+            print('d:'..numChildren..'/'..numRegions)
+            -- print('item')
+        end
+        aa1:SetScript("OnFinished", function()
+            f:clearSkill(name)
+        end)
+        widgetCache[name] = {item = item, icon = icon, fs=fs, ss=ss, prog = prog, clear = clear, aag = aag, aa1=aa1}
+        return item, icon, fs, ss, prog, clear, aag, aa1
+    end
+end
 function addItem(size, name, spellId, second)
     -- print('add_item', size, name, spellId)
-    local item = f:CreateTexture(nil, "ARTWORK");
+    local item, icon, fs, ss, prog, clear,aag, aa1 = f:aqual(name)
+    -- local item = f:CreateTexture(nil, "ARTWORK");
     item:SetWidth(240)
     item:SetHeight(ht)
+    item:Show()
 
-    local icon = f:CreateTexture(nil,"ARTWORK")
+    -- local icon = f:CreateTexture(nil,"ARTWORK")
     icon:SetTexture(spellId)
     icon:SetWidth(ht)
     icon:SetHeight(ht)
     icon:SetPoint("TOPLEFT",item, 0, 0)
+    icon:Show()
     
     
-    local fs = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
+    -- local fs = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
     fs:SetText(name)
     fs:SetTextColor(1, 1, 1)
     fs:SetPoint("CENTER",item, 13, 0)
+    fs:Show()
 
     
-    local ss = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
-    -- ss:SetText((second/1000)..'s')
-    ss:SetText('1.2s')
+    -- local ss = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
+    ss:SetText((second/1000)..'s')
+    -- ss:SetText('1.2s')
     ss:SetTextHeight(12)
     ss:SetTextColor(.7, .7, .7)
     ss:SetPoint("BOTTOMRIGHT",item, -13, 5)
+    ss:Show()
 
-    local  prog = f:CreateTexture(nil, "ARTWORK");
+    -- local  prog = f:CreateTexture(nil, "ARTWORK");
     prog:SetColorTexture(0.09, 0.61, 0.55, .6)
     prog:SetWidth(10)
     prog:SetHeight(ht)
     prog:SetPoint("TOPLEFT",item, 26, 0)
+    prog:Show()
 
     
-    local aag = prog:CreateAnimationGroup()
-    local aa1 = aag:CreateAnimation("Scale")
+    -- local aag = prog:CreateAnimationGroup()
+    -- local aa1 = aag:CreateAnimation("Scale")
     aa1:SetOrigin("LEFT",0,0)
     aa1:SetScale(20,1)
     aa1:SetDuration(second/ 1000)
     aa1:SetOrder(2)
-    local function clear()
-        aag:Stop()
-        -- print('----stop')
-        icon:SetTexture(nil)
-        icon:Hide()
-        -- print('icon')
-        fs:Hide()
-        ss:Hide()
-        -- print('fs')
-        prog:Hide()
-        -- print('prog')
-        item:Hide()
-        local numChildren = f:GetNumChildren()
-        local numRegions = f:GetNumRegions()
-        print('d:'..numChildren..'/'..numRegions)
-        -- print('item')
-    end
-    aa1:SetScript("OnFinished", function()
-        f:clearSkill(name)
-    end)
-    aag:Play()
+    -- local function clear()
+    --     aag:Stop()
+    --     -- print('----stop')
+    --     icon:SetTexture(nil)
+    --     icon:Hide()
+    --     -- print('icon')
+    --     fs:Hide()
+    --     ss:Hide()
+    --     -- print('fs')
+    --     prog:Hide()
+    --     -- print('prog')
+    --     item:Hide()
+    --     local numChildren = f:GetNumChildren()
+    --     local numRegions = f:GetNumRegions()
+    --     print('d:'..numChildren..'/'..numRegions)
+    --     -- print('item')
+    -- end
+    -- aa1:SetScript("OnFinished", function()
+    --     f:clearSkill(name)
+    -- end)
+    aag:Restart()
 
     item:SetPoint("TOPLEFT",f, 6, -5 - size * (ht + 2))
     return item, clear
