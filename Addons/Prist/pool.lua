@@ -2,7 +2,7 @@
 local major, minor = 'panelPool', 1
 local Pool = LibStub:NewLibrary (major, minor)
 
-local debug =true
+local util  = LibStub('p_utls')
 
 function Pool:create(frame)
   local instance = {}
@@ -12,6 +12,7 @@ function Pool:create(frame)
 end
 
 function Pool:addTarget(uname, spellId, ftime)
+  util.log('ac', 'ad')
   -- self:clearSkill(name)
   -- local size = table.getn(userList)
   -- local item, clear = addItem(size, name, icon, dur)
