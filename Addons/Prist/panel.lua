@@ -8,6 +8,8 @@ local addon = CreateFrame('Frame',nil,UIParent)
 local visible = true
 local canMove = true
 
+local ht =27
+
 local userclass = UnitClassBase('player')
 
 function moving(frame)
@@ -42,6 +44,73 @@ function setBorder(frame)
 -- frame:SetBackdropBorderColor(1, 1, 1)
 -- frame:SetBackdropColor(24 / 255, 24 / 255, 24 / 255)
   -- frame:SetBackdropColor(0, 0, 0, .4)
+end
+
+local WidgetFactory = {}
+function WidgetFactory:create ()
+  local o = {}
+  setmetatable(o, { __index = self })
+  
+  self.item = f:CreateTexture(nil, "ARTWORK")
+  self.lef = f:CreateTexture(nil, "ARTWORK")
+  self.icon = f:CreateTexture(nil,"ARTWORK")
+  self.fs = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
+  self.ss = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
+  self.prog = f:CreateTexture(nil, "ARTWORK")
+  self.aag = prog:CreateAnimationGroup()
+  self.aa1 = aag:CreateAnimation("Scale")
+  return o
+end
+function WidgetFactory:hide ()
+    self.aag:Stop()
+    self.aag:Finish()
+    self.icon:SetTexture(nil)
+    self.icon:Hide()
+    self.fs:Hide()
+    self.ss:Hide()
+    self.prog:Hide()
+    self.item:Hide()
+end
+
+function WidgetFactory:show(name, spellId)
+  self.item:SetWidth(240)
+  self.item:SetHeight(ht)
+  self.item:Show()
+
+  self.icon:SetTexture(spellId)
+  self.icon:SetWidth(ht)
+  self.icon:SetHeight(ht)
+  self.icon:SetPoint("TOPLEFT",item, 0, 0)
+  self.icon:Show()
+  
+  self.fs:SetText(name)
+  self.fs:SetTextColor(.8, .8, .8)
+  self.fs:SetPoint("CENTER",item, 13, 0)
+  self.fs:Show()
+
+  self.ss:SetText((second/1000)..'s')
+  self.ss:SetTextHeight(12)
+  self.ss:SetTextColor(.8, .8, .8)
+  self.ss:SetPoint("BOTTOMRIGHT",item, -13, 5)
+  self.ss:Show()
+
+  if name == username then
+      self.prog:SetColorTexture(0.1, 0.7, 0.6, .7)
+  else
+    self.prog:SetColorTexture(0.09, 0.61, 0.55, .6)
+  end
+  self.prog:SetWidth(10)
+  self.prog:SetHeight(ht)
+  -- prog:SetTextColor(.5, .5, .5)
+  self.prog:SetPoint("TOPLEFT",item, 26, 0)
+  self.prog:Show()
+  self.aa1:SetOrigin("LEFT",0,0)
+  self.aa1:SetScale(20,1)
+  self.aa1:SetDuration(second/ 1000)
+  self.aa1:SetOrder(2)
+  self.aag:Restart()
+  return self.item
+  -- item:SetPoint("TOPLEFT",f, 6, -5 - size * (ht + 2))
 end
 
 local TexPoolResetter = function(pool, tex)
@@ -84,7 +153,6 @@ function Prist:setMove(v)
   canMove = v
 end
 
-local ht =27
 
 
 function parseStartSpell(...)

@@ -1,8 +1,19 @@
+local _, namespace = ...
+local castTimeIncreases = namespace.castTimeIncreases
+
 local username = UnitName('player')
 local userrace = UnitRace('player')
-local userclass = UnitClass('player')
--- print(username..userclass)
+local userclass = UnitClassBase('player')
+print(username..userclass)
 
+local upsecond = GetTime()
+local tts = GetServerTime()
+print(tts, upsecond)
+
+
+local ht = 22
+local vmargin = 2
+local hmargin = 1
 local function view(arg)
     for k,v in pairs(arg) do
         print(k, v)
@@ -40,7 +51,8 @@ function moving(frame)
     end)
 end
 
-local ht = 22
+view(RAID_CLASS_COLORS[userclass])
+
 local f = CreateFrame("Frame",nil,UIParent)
 -- f:SetFrameStrata("WORLD")
 moving(f)
@@ -51,10 +63,10 @@ local widgetCache = {}
 function f:aqual (name)
     local sst = widgetCache[name]
     if sst then
-        print('cache')
+        -- print('cache')
         return sst.item, sst.icon, sst.fs, sst.ss, sst.prog, sst.clear, sst.aag, sst.aa1
     else
-        print('create panel')
+        -- print('create panel')
         local item = f:CreateTexture(nil, "ARTWORK");
         local icon = f:CreateTexture(nil,"ARTWORK")
         local fs = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
@@ -74,7 +86,7 @@ function f:aqual (name)
             item:Hide()
             local numChildren = f:GetNumChildren()
             local numRegions = f:GetNumRegions()
-            print('d:'..numChildren..'/'..numRegions)
+            -- print('d:'..numChildren..'/'..numRegions)
             -- print('item')
         end
         aa1:SetScript("OnFinished", function()
@@ -85,24 +97,20 @@ function f:aqual (name)
     end
 end
 function addItem(size, name, spellId, second)
-    -- print('add_item', size, name, spellId)
     local item, icon, fs, ss, prog, clear,aag, aa1 = f:aqual(name)
-    -- local item = f:CreateTexture(nil, "ARTWORK");
     item:SetWidth(240)
     item:SetHeight(ht)
     item:Show()
 
-    -- local icon = f:CreateTexture(nil,"ARTWORK")
     icon:SetTexture(spellId)
     icon:SetWidth(ht)
     icon:SetHeight(ht)
     icon:SetPoint("TOPLEFT",item, 0, 0)
     icon:Show()
     
-    
-    -- local fs = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
     fs:SetText(name)
-    fs:SetTextColor(1, 1, 1)
+    -- fs:SetTextColor(1, 1, 1)
+    fs:SetTextColor(.8, .8, .8)
     fs:SetPoint("CENTER",item, 13, 0)
     fs:Show()
 
@@ -111,44 +119,26 @@ function addItem(size, name, spellId, second)
     ss:SetText((second/1000)..'s')
     -- ss:SetText('1.2s')
     ss:SetTextHeight(12)
-    ss:SetTextColor(.7, .7, .7)
+    ss:SetTextColor(.8, .8, .8)
     ss:SetPoint("BOTTOMRIGHT",item, -13, 5)
     ss:Show()
-
-    -- local  prog = f:CreateTexture(nil, "ARTWORK");
-    prog:SetColorTexture(0.09, 0.61, 0.55, .6)
+    -- local ctable = RAID_CLASS_COLORS[userclass]
+    -- print(ctable.r)
+    -- prog:SetColorTexture(ctable.r, ctable.g, ctable.b)
+    if name == username then
+        prog:SetColorTexture(0.1, 0.7, 0.6, .7)
+    else
+        prog:SetColorTexture(0.09, 0.61, 0.55, .6)
+    end
     prog:SetWidth(10)
     prog:SetHeight(ht)
+    -- prog:SetTextColor(.5, .5, .5)
     prog:SetPoint("TOPLEFT",item, 26, 0)
     prog:Show()
-
-    
-    -- local aag = prog:CreateAnimationGroup()
-    -- local aa1 = aag:CreateAnimation("Scale")
     aa1:SetOrigin("LEFT",0,0)
     aa1:SetScale(20,1)
     aa1:SetDuration(second/ 1000)
     aa1:SetOrder(2)
-    -- local function clear()
-    --     aag:Stop()
-    --     -- print('----stop')
-    --     icon:SetTexture(nil)
-    --     icon:Hide()
-    --     -- print('icon')
-    --     fs:Hide()
-    --     ss:Hide()
-    --     -- print('fs')
-    --     prog:Hide()
-    --     -- print('prog')
-    --     item:Hide()
-    --     local numChildren = f:GetNumChildren()
-    --     local numRegions = f:GetNumRegions()
-    --     print('d:'..numChildren..'/'..numRegions)
-    --     -- print('item')
-    -- end
-    -- aa1:SetScript("OnFinished", function()
-    --     f:clearSkill(name)
-    -- end)
     aag:Restart()
 
     item:SetPoint("TOPLEFT",f, 6, -5 - size * (ht + 2))
@@ -200,7 +190,6 @@ function f:recompute()
     f:SetHeight(h)
 end
 function f:Add_SKill(name, icon, dur)
-    -- table.insert(userList, 'a')
     f:clearSkill(name)
     local size = table.getn(userList)
     local item, clear = addItem(size, name, icon, dur)
@@ -238,9 +227,16 @@ function f:clearSkill(name)
 end
 
 function f:ch(uname, sname)
-    local cls = UnitClass(uname)
+    -- print('--'..uname..sname)
+    -- if username == uname then
+    --     return
+    -- end
+    local cls = UnitClassBase(uname)
+    -- print(cls..uname..sname)
     if userclass == cls then
+        -- print('in'..cls..uname..sname)
         local name, rank, icon, castTime, _, _, sid = GetSpellInfo(sname);
+        -- print(name, rank, icon, castTime)
         if not icon then
             return nil
         end
@@ -262,7 +258,15 @@ function f:Spellan(timestamp, eventtype, ...)
         -- view(tt)
         local _, srcGUID, srcName, spellId, spellName = ...
         local sname = tt[11]
+        -- print(namespace)
+        -- local nn = castTimeIncreases(spellName)
+        -- print(nn)
+        -- print(srcName, sname)
         local name, icon, dur = f:ch(srcName, sname)
+        -- print(timestamp, dur)
+        local tts2 = GetTime()
+        -- print(tts2)
+        -- print(tts2 - timestamp)
         if name then
             f:Add_SKill(name, icon, dur)
         end
@@ -270,23 +274,45 @@ function f:Spellan(timestamp, eventtype, ...)
     elseif eventtype == 'SPELL_CAST_FAILED' then
         local _, srcGUID, srcName, spellId, spellName = ...
         local sname = tt[11]
+        -- print(eventtype, srcName, sname)
         local aa = f:ch(srcName, sname)
+        -- print(aa)
         if aa then
             f:clearSkill(srcName);
         end
+    elseif eventtype == 'SPELL_CAST_SUCCESS' then
+        -- print('su'..timestamp, srcGUID)
+        
     end
-    -- print(eventtype)
-    -- table.insert(EGM, {timestamp, eventtype, hideCaster, srcGUID, srcName, srcFlags, srcRaidFlags, dstGUID, dstName, dstFlags, dstRaidFlags, ...}) 
-    -- print('---')
-  end
+end
 function f:UNIT_SPELLCAST_SUCCEEDED(unitID, _, spellID)
-    -- print(unitID, spellID)
     local name, rank, icon, castTime, _, _, sid = GetSpellInfo(spellID);
-    -- print(name, rank, icon, castTime, sid);
 end
 
 function f:COMBAT_LOG_EVENT_UNFILTERED()
     self:Spellan(CombatLogGetCurrentEventInfo());
+end
+function f:UNIT_SPELLCAST_SENT(...)
+    local unit, uname, castGUID, spellID = ...
+    if unit == 'player' then
+        local name, _, icon, castTime, _, _, sid = GetSpellInfo(spellID);
+        if name then
+            
+        -- local upsecond2 = GetTime()
+        -- local tts2 = GetServerTime()
+        -- print((tts2 -tts) -  (upsecond2 - upsecond))
+        -- local stime = GetServerTime()
+        -- print(stime)
+            -- f:Add_SKill(username, icon, castTime)
+        end
+    end
+end
+
+function f:UNIT_SPELLCAST_INTERRUPTED(...)
+    local unitTarget, castGUID, spellID = ...
+    if unitTarget == 'player' then
+        f:clearSkill(username);
+    end
 end
 
 -- function f:Update()
@@ -295,6 +321,8 @@ end
 -- end
 
 f:RegisterEvent('COMBAT_LOG_EVENT_UNFILTERED')
+f:RegisterEvent('UNIT_SPELLCAST_SENT')
+f:RegisterEvent('UNIT_SPELLCAST_INTERRUPTED')
 f:SetScript("OnEvent", function(self, event, ...)
         if self[event] then
             self[event](self, ...)
@@ -302,9 +330,13 @@ f:SetScript("OnEvent", function(self, event, ...)
     end
 )
 
--- local function f_Update(self, elapsed)
---     f:Update(elapsed)
--- end
--- f:SetScript("OnUpdate", f_Update)
-
 print('ui show')
+-- local func = GetSlashFunc("/quit")
+SLASH_PRIST1 = "/prist"
+SlashCmdList["PRIST"] = function(msg)
+    if msg == 'show' then
+        f:Show()
+    elseif msg == 'hide' then
+        f:Hide()
+    end
+end

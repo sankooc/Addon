@@ -3,9 +3,9 @@
 ## Title-zhCN: 空牧师小本本
 ## Author: sankooc
 # LibStub.lua
-lib/util.lua
-panel.lua
-pool.lua
-Prist.lua
+# lib/util.lua
+# panel.lua
+# pool.lua
+# Prist.lua
 
-# ui.lua
+ui.lua
