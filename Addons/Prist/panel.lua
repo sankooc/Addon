@@ -8,9 +8,19 @@ local addon = CreateFrame('Frame',nil,UIParent)
 local visible = true
 local canMove = true
 
-local ht =27
+local h_padding = 2
+local v_padding = 2
+local ht = 27
+local s_padding = 2
+local progress_width = 200
+local b_height = 2
+local rate = 20
 
+local username = UnitName('player')
+local userrace = UnitRace('player')
 local userclass = UnitClassBase('player')
+
+local ctable = RAID_CLASS_COLORS[userclass]
 
 function moving(frame)
   frame:EnableMouse(true)
@@ -51,47 +61,50 @@ function WidgetFactory:create ()
   local o = {}
   setmetatable(o, { __index = self })
   
-  self.item = f:CreateTexture(nil, "ARTWORK")
-  self.lef = f:CreateTexture(nil, "ARTWORK")
-  self.icon = f:CreateTexture(nil,"ARTWORK")
-  self.fs = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
-  self.ss = f:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
-  self.prog = f:CreateTexture(nil, "ARTWORK")
-  self.aag = prog:CreateAnimationGroup()
-  self.aa1 = aag:CreateAnimation("Scale")
+  self.item = addon:CreateTexture(nil, "ARTWORK")
+  self.lef = addon:CreateTexture(nil, "ARTWORK")
+  self.icon = addon:CreateTexture(nil,"ARTWORK")
+  self.fs = addon:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
+  self.ss = addon:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
+  self.prog = addon:CreateTexture(nil, "ARTWORK")
+  self.aag = self.prog:CreateAnimationGroup()
+  self.aa1 = self.aag:CreateAnimation("Scale")
   return o
 end
 function WidgetFactory:hide ()
     self.aag:Stop()
     self.aag:Finish()
+    self.lef:Hide()
     self.icon:SetTexture(nil)
     self.icon:Hide()
     self.fs:Hide()
     self.ss:Hide()
     self.prog:Hide()
     self.item:Hide()
+    self.aa1:SetScript("OnFinished", nil)
 end
 
-function WidgetFactory:show(name, spellId)
-  self.item:SetWidth(240)
-  self.item:SetHeight(ht)
+function WidgetFactory:show(name, spellId, second)
+  self.item:SetSize(240, ht)
   self.item:Show()
 
   self.icon:SetTexture(spellId)
-  self.icon:SetWidth(ht)
-  self.icon:SetHeight(ht)
-  self.icon:SetPoint("TOPLEFT",item, 0, 0)
+  self.icon:SetSize(ht, ht)
+  self.icon:SetPoint("TOPLEFT", self.item, 0, 0)
   self.icon:Show()
   
   self.fs:SetText(name)
-  self.fs:SetTextColor(.8, .8, .8)
-  self.fs:SetPoint("CENTER",item, 13, 0)
+  self.fs:SetTextColor(ctable.r, ctable.g, ctable.b)
+  -- self.fs:SetTextColor(.8, .8, .8)
+  -- log('lineh', self.fs:GetLineHeight())
+  -- local ptt = (ht - self.fs:GetLineHeight())/2
+  self.fs:SetPoint("CENTER",self.item, ht/2, 2)
   self.fs:Show()
 
   self.ss:SetText((second/1000)..'s')
   self.ss:SetTextHeight(12)
   self.ss:SetTextColor(.8, .8, .8)
-  self.ss:SetPoint("BOTTOMRIGHT",item, -13, 5)
+  self.ss:SetPoint("BOTTOMRIGHT",self.item, -ht/2, 4)
   self.ss:Show()
 
   if name == username then
@@ -99,41 +112,28 @@ function WidgetFactory:show(name, spellId)
   else
     self.prog:SetColorTexture(0.09, 0.61, 0.55, .6)
   end
-  self.prog:SetWidth(10)
-  self.prog:SetHeight(ht)
-  -- prog:SetTextColor(.5, .5, .5)
-  self.prog:SetPoint("TOPLEFT",item, 26, 0)
+  self.prog:SetSize(progress_width / rate, ht - b_height)
+  self.prog:SetPoint("TOPLEFT",self.item, ht + s_padding, 0)
   self.prog:Show()
+  
+  -- self.lef:SetSize(progress_width + ht + s_padding, b_height)
+  -- self.lef:SetColorTexture(ctable.r, ctable.g, ctable.b)
+  -- self.lef:SetColorTexture(0.1, 0.1, 0.1, .9)
+  -- self.lef:SetPoint("BOTTOMLEFT", self.item, 0, 0)
+  -- self.lef:Show()
+
   self.aa1:SetOrigin("LEFT",0,0)
   self.aa1:SetScale(20,1)
   self.aa1:SetDuration(second/ 1000)
   self.aa1:SetOrder(2)
+  local that = self
+  self.aa1:SetScript("OnFinished", function()
+    -- that:hide()
+  end)
   self.aag:Restart()
   return self.item
   -- item:SetPoint("TOPLEFT",f, 6, -5 - size * (ht + 2))
 end
-
-local TexPoolResetter = function(pool, tex)
-  log('texture reset')
-  tex:Hide()
-  -- tex:un
-  tex:ClearAllPoints()
-end
-
-local function StringResetter(pool,tex)
-  log('string reset')
-  tex:Hide()
-  tex:ClearAllPoints()
-end 
-
--- local pool = CreateObjectPool(
---   function() return CreateFrame("Frame") end,
---   function(__, frame) frame:Hide() end
--- )
--- local frame = pool:Acquire()
-local TextPool = CreateTexturePool(UIParent ,"ARTWORK",TexPoolResetter)
-local StringPool = CreateFontStringPool(UIParent , 'OVERLAY', StringResetter)
-
 
 moving(addon)
 setBorder(addon)
@@ -178,84 +178,9 @@ function Prist:startSpell(...)
   if not castTime then
     return
   end
-  -- log('', ts, name)
-  -- local sname = arg[13]
-  -- log('start:',name, sname)
-  -- local _, rank, icon, castTime, _, _, sid = GetSpellInfo(sname);
-  -- log('start:', name, sname, icon, castTime)
-  -- log(name, spellId, second)
-  -- view({...})
-  local item = TextPool:Acquire()
-  local icon = TextPool:Acquire()
-  local fs = StringPool:Acquire()
-  local ss = StringPool:Acquire()
-  local prog = TextPool:Acquire()
-  local aag = prog:CreateAnimationGroup()
-  local aa1 = aag:CreateAnimation("Scale")
-  local function _release()
-    TextPool:Release(item)
-    TextPool:Release(icon)
-    TextPool:Release(prog)
-    TextPool:Release(item)
-    StringPool:Release(fs)
-    StringPool:Release(ss)
-  end
-  -- log('----0')
-  
-  item:SetWidth(240)
-  item:SetHeight(ht)
-  item:Show()
-
-  icon:SetTexture(icont)
-  icon:SetWidth(ht)
-  icon:SetHeight(ht)
-  icon:SetPoint("TOPLEFT",item, 0, 0)
-  icon:Show()
-  
-
-  do
-    local ffname, r, g, b, a = nameplateStyle(name)
-    fs:SetFontObject('GameTooltipText')
-    fs:SetText(ffname)
-    fs:SetTextColor(r, g, b, a)
-    fs:SetPoint("CENTER",item, 13, 0)
-    fs:Show()
-  end
-  -- ss:SetText((castTime/1000)..'s')
-  -- ss:SetText('1.2s')
-  ss:SetTextHeight(12)
-  ss:SetTextColor(.8, .8, .8)
-  ss:SetPoint("BOTTOMRIGHT",item, -13, 5)
-  ss:Show()
-  -- log('----2')
-  -- local ctable = RAID_CLASS_COLORS[userclass]
-  -- prog:SetColorTexture(ctable.r, ctable.g, ctable.b)
-  -- prog:SetColorTexture(0.09, 0.61, 0.55, .6)
-  do
-    local g, r, b, a = progresStyle(name)
-    prog:SetColorTexture(g, r, b, a)
-    prog:SetWidth(10)
-    -- prog:SetScale(0.05) 
-    prog:SetHeight(ht)
-    prog:SetPoint("TOPLEFT",item, 26, 0)
-    prog:Show()
-    
-
-    aa1:SetScript("OnFinished", function()
-      prog:SetWidth(200)
-      -- prog:SetWidth(200)
-      _release()
-      log('rela')
-        -- f:clearSkill(name)
-    end)
-  end
-  aa1:SetOrigin("LEFT",0,0)
-  aa1:SetScale(20,1)
-  aa1:SetDuration(castTime/ 1000)
-  aa1:SetOrder(2)
-  aag:Restart()
-
-  item:SetPoint("TOPLEFT", addon, 6, -5 - 0 * (ht + 2))
+  local ppp = WidgetFactory:create()
+  ppp:show(name, icont, castTime)
+  ppp.item:SetPoint("TOPLEFT", addon, 6, -5 - 0 * (ht + 2))
 
 
 
@@ -283,7 +208,8 @@ function Prist:CLGCEI(...)
   local ts, type = ...
   -- print(ts, type)
   if type == 'SPELL_CAST_START' then
-    Prist:startSpell(...)
+    local stat, err = pcall(function(...) Prist:startSpell(...) end, ...)
+    if not stat then log(err) end
   elseif type == 'SPELL_CAST_SUCCESS' then
     Prist:finishSpell(...)
   elseif type == 'SPELL_CAST_FAILED' then
