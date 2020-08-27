@@ -1,6 +1,16 @@
 print(_G.LibStub)
 local major, minor = "mock", '1'
-local mock = LibStub:NewLibrary (major, minor)
+local Pool = LibStub:NewLibrary (major, minor)
+
+local _cache = {}
+
+function Pool:Acquire (uname, icon, start, castTime)
+  local sst = _cache[uname]
+  if sst then
+  else
+  end
+  
+end
 
 -- Rectangle.area = 0
 -- Rectangle.length = 0

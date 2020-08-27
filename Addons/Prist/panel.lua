@@ -84,6 +84,14 @@ function WidgetFactory:hide ()
     self.aa1:SetScript("OnFinished", nil)
 end
 
+local function barStyle(name)
+  if name == username then
+    return 0.1, 0.7, 0.6, .7
+  else
+    return 0.09, 0.61, 0.55, .6
+  end
+end
+
 function WidgetFactory:show(name, spellId, second)
   self.item:SetSize(240, ht)
   self.item:Show()
@@ -106,12 +114,8 @@ function WidgetFactory:show(name, spellId, second)
   self.ss:SetTextColor(.8, .8, .8)
   self.ss:SetPoint("BOTTOMRIGHT",self.item, -ht/2, 4)
   self.ss:Show()
-
-  if name == username then
-      self.prog:SetColorTexture(0.1, 0.7, 0.6, .7)
-  else
-    self.prog:SetColorTexture(0.09, 0.61, 0.55, .6)
-  end
+  local r, g, b, a = barStyle(name)
+  self.prog:SetColorTexture(r, g, b, a)
   self.prog:SetSize(progress_width / rate, ht - b_height)
   self.prog:SetPoint("TOPLEFT",self.item, ht + s_padding, 0)
   self.prog:Show()
@@ -170,15 +174,43 @@ end
 function nameplateStyle(uname)
   return uname, .8, .8, .8, .9;
 end
+local cache = {}
+
+local Queue = {}
+Queue.data = {}
+Queue.map = {}
+local function compare(a, b)
+  return (a.start + a.castTime) > (b.start + b.castTime)
+end
+function Queue.insert(name, start, castTime, widget)
+  -- delay display
+  if not Queue.map[name] then
+    local ite = { name=name, start=start, castTime=castTime, widget=widget }
+    table.insert(Queue.data, ite);
+    Queue.map[name] = ite
+  end
+  table.sort(Queue.data, compare)
+end
+function Queue.del(name)
+  table.remove()
+  Queue.map[name] = nil
+end
+
+local function loadOne(name)
+  if cache[name] then
+    return cache[name]
+  end
+  cache[name] = WidgetFactory:create()
+  return cache[name]
+end
 function Prist:startSpell(...)
-  -- log('start')
   local ts, _, _, _, name = ...
   local icont, sid, sname, castTime = parseStartSpell(...)
   print(icont, sid, sname, castTime, name, ts)
   if not castTime then
     return
   end
-  local ppp = WidgetFactory:create()
+  local ppp = loadOne(name)
   ppp:show(name, icont, castTime)
   ppp.item:SetPoint("TOPLEFT", addon, 6, -5 - 0 * (ht + 2))
 
