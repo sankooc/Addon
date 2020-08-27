@@ -64,11 +64,15 @@ function WidgetFactory:create ()
   self.item = addon:CreateTexture(nil, "ARTWORK")
   self.lef = addon:CreateTexture(nil, "ARTWORK")
   self.icon = addon:CreateTexture(nil,"ARTWORK")
-  self.fs = addon:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
-  self.ss = addon:CreateFontString(nil, "OVERLAY", 'GameTooltipText')
+  self.fs = addon:CreateFontString(nil, "OVERLAY", 'CombatLogFont')
+  self.ss = addon:CreateFontString(nil, "OVERLAY", 'GameFontWhiteTiny')
+  self.ps = addon:CreateFontString(nil, "OVERLAY", 'GameFontHighlightSmall')
   self.prog = addon:CreateTexture(nil, "ARTWORK")
   self.aag = self.prog:CreateAnimationGroup()
   self.aa1 = self.aag:CreateAnimation("Scale")
+  self.toh = self.prog:CreateAnimationGroup()
+  self.aa2 = self.toh:CreateAnimation("Alpha")
+  self.per = 0
   return o
 end
 function WidgetFactory:hide ()
@@ -79,6 +83,7 @@ function WidgetFactory:hide ()
     self.icon:Hide()
     self.fs:Hide()
     self.ss:Hide()
+    self.ps:Hide()
     self.prog:Hide()
     self.item:Hide()
     self.aa1:SetScript("OnFinished", nil)
@@ -89,6 +94,16 @@ local function barStyle(name)
     return 0.1, 0.7, 0.6, .7
   else
     return 0.09, 0.61, 0.55, .6
+  end
+end
+
+local function perStyle(per)
+  if per > 75 then
+    return 154/255, 205/255, 50/255, 15
+  elseif per > 40 then
+    return 218/255, 165/255, 32/255, 15
+  else
+    return 1, 0, 0, 15
   end
 end
 
@@ -103,15 +118,18 @@ function WidgetFactory:show(name, spellId, second)
   
   self.fs:SetText(name)
   self.fs:SetTextColor(ctable.r, ctable.g, ctable.b)
-  -- self.fs:SetTextColor(.8, .8, .8)
-  -- log('lineh', self.fs:GetLineHeight())
-  -- local ptt = (ht - self.fs:GetLineHeight())/2
-  self.fs:SetPoint("CENTER",self.item, ht/2, 2)
+  self.fs:SetPoint("CENTER",self.item, ht/2 + 7, 2)
   self.fs:Show()
+  do
+    self.ps:SetText(self.per..'%')
+    local r,g,b = perStyle(self.per)
+    self.ps:SetTextColor(r, g, b)
+    self.ps:SetPoint("LEFT",self.item, ht + s_padding + 4, 0)
+    self.ps:Show()
+  end
 
   self.ss:SetText((second/1000)..'s')
-  self.ss:SetTextHeight(12)
-  self.ss:SetTextColor(.8, .8, .8)
+  self.ss:SetTextColor(.9, .9, .9)
   self.ss:SetPoint("BOTTOMRIGHT",self.item, -ht/2, 4)
   self.ss:Show()
   local r, g, b, a = barStyle(name)
@@ -132,7 +150,17 @@ function WidgetFactory:show(name, spellId, second)
   self.aa1:SetOrder(2)
   local that = self
   self.aa1:SetScript("OnFinished", function()
-    -- that:hide()
+    log('finishing')
+    that:hide()
+    -- local r,g,b = perStyle(that.per)
+    -- that.ps:SetTextColor(r, g, b)
+    -- that.ps:SetText(that.per..'%')
+    -- that.prog:SetSize(progress_width, ht - b_height)
+    -- that.aa2:SetFromAlpha(1)
+    -- that.aa2:SetToAlpha(0)
+    -- that.aa2:SetDuration(.5)
+    -- that.toh:Restart()
+    -- that.ss:SetPoint("BOTTOMRIGHT",that.item, -ht/2, 4)
   end)
   self.aag:Restart()
   return self.item
@@ -214,8 +242,6 @@ function Prist:startSpell(...)
   ppp:show(name, icont, castTime)
   ppp.item:SetPoint("TOPLEFT", addon, 6, -5 - 0 * (ht + 2))
 
-
-
   -- widgetCache[name] = {item = item, icon = icon, fs=fs, ss=ss, prog = prog, clear = clear, aag = aag, aa1=aa1}
   -- return item, icon, fs, ss, prog, clear, aag, aa1
 end
@@ -223,11 +249,16 @@ end
 function Prist:interruptSpell()
 end
 
-function Prist:finishSpell()
+function Prist:finishSpell(...)
+  -- view({...})
 end
 
 function Prist:heal(...)
-  log(...)
+  local ts, _, _, guid, caster, _, _, targetGuid, target, _, _, _, spellName, spellSchool, amount, overkill = ...
+  local per = math.ceil((amount - overkill) * 10000 / amount) / 100
+  log('heal', ts, caster, target, spellName, amount, overkill, per)
+  local ppp = loadOne(caster)
+  ppp.per = per
 end
 
 function Prist:init(...)
