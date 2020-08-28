@@ -21,24 +21,12 @@ local function view(arg)
   end
 end
 
-local TexPoolResetter = function(pool,tex)
-  log('texture reset')
-  tex:Hide()
-  tex:ClearAllPoints()
-end
-local function StringResetter(pool,tex)
-  log('string reset')
-  tex:Hide()
-  tex:ClearAllPoints()
-end 
-local TextPool = CreateTexturePool(UIParent ,"ARTWORK",TexPoolResetter)
-local StringPool = CreateFontStringPool(UIParent , 'OVERLAY', StringResetter)
-
-local addon = prist.addon
 local main = {}
 
-local creator = Pool:create(addon)
+-- local creator = Pool:create(addon)
 
+local f = prist:create()
+local addon = f.addon
 -- event define
 function main:ADDON_LOADED(add_name)
   if add_name == 'Prist' then
@@ -46,44 +34,22 @@ function main:ADDON_LOADED(add_name)
     loaded = true
   end
 end
-local icon
 
 function main:UNIT_SPELLCAST_SENT(...)
   local unit, uname, castGUID, spellID = ...
-  -- if icon then
-    -- TextPool:Release(icon)
-    -- util.log('relase')
-    -- local numChildren = TextPool:GetNumChildren()
-    -- local numRegions = TextPool:GetNumRegions()
-    -- print('d:'..numChildren..'/'..numRegions)
-  -- end
-  prist:init(...)
-  -- icon = TextPool:Acquire()
-  
-  -- icon:SetTexture(spellID)
-  -- icon:SetSize(20, 20)
-  -- icon:SetPoint("TOPLEFT",addon, 5, -5)
-  -- icon:Show()
-  -- util.log('icon shouw')
-  -- TextPool:Release(icon)
-  -- creator:addTarget(uname, spellID)
-  -- local framePool = CreateFramePool("Statusbar", UIParent, "SmallCastingBarFrameTemplate", ResetterFunc)
-  -- framePool:SetPoint("BOTTOMRIGHT",-150,350)
-  -- framePool:Show()
-  -- local f = PoolManager:AcquireFrame()
-  -- PoolManager:InitializeNewFrame(f)
-  -- util.log('init')
+  f:init(...)
 end
 
 function main:UNIT_SPELLCAST_INTERRUPTED()
 end
 function main:COMBAT_LOG_EVENT_UNFILTERED()
-  prist:CLGCEI(CombatLogGetCurrentEventInfo())
+  f:CLGCEI(CombatLogGetCurrentEventInfo())
 end
 -- view(main)
 
 
 
+-- local addon = prist.addon
 --  bind events
 for k,v in pairs(main) do
   addon:RegisterEvent(k)
@@ -98,9 +64,7 @@ end
 addon:SetScript("OnEvent", hand)
 
 
--- addon:Hide()
+-- -- addon:Hide()
 
-addon:SetWidth(238)
-addon:SetHeight(400)
-
-prist:update(true)
+-- local profile = {} -- ui setting profile
+f:update(true)
