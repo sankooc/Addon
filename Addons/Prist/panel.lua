@@ -190,14 +190,14 @@ local Queue = {}
 Queue.data = {}
 Queue.map = {}
 local function compare(a, b)
-  return (a.start + a.castTime) < (b.start + b.castTime)
+  return a.weight < b.weight
 end
-function Queue.insert(name, start, castTime, widget)
+function Queue.insert(name, weight, widget)
   -- delay display
   local size = table.getn(Queue.data)
   log('size:', size)
   if not Queue.map[name] then
-    local ite = { name=name, start=start, castTime=castTime, widget=widget }
+    local ite = { name=name, weight=weight, widget=widget }
     table.insert(Queue.data, ite);
     Queue.map[name] = ite
     log('insert_toqueque')
@@ -262,8 +262,8 @@ function Prist:startSpell(...)
   log('start', name)
   local ppp = self:loadOne(name)
   ppp:init({ name=name, icon = icont, castTime = castTime})
-  -- ppp:show(1)
-  Queue.insert(name, ts, castTime, ppp)
+  local weight = castTime / 1000 + ts
+  Queue.insert(name, weight, ppp)
 end
 
 function Prist:interruptSpell(...)
