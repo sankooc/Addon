@@ -4,6 +4,7 @@
 ## Author: sankooc
 LibStub.lua
 lib/util.lua
+lib/option.lua
 panel.lua
 pool.lua
 Prist.lua

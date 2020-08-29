@@ -6,6 +6,9 @@ local log = util.log
 local view = util.view
 local unpack = util.unpack
 
+local username = UnitName('player');
+local userrace = UnitRace('player')
+local userclass = UnitClassBase('player')
 local profile = {
   visible = true,
   canMove = true,
@@ -16,29 +19,18 @@ local profile = {
   progress_width = 200,
   b_height = 2,
   rate = 20,
-  username = UnitName('player'),
-  userrace = UnitRace('player'),
-  userclass = UnitClassBase('player')
+  width = 242,
 }
 
--- view(profile)
-
-local ctable = RAID_CLASS_COLORS[profile.userclass]
+local ctable = RAID_CLASS_COLORS[userclass]
 
 
 function setBorder(frame)
   frame:SetBackdrop({
-  -- bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-    -- bgFile = "Interface/Tooltips/UI-Tooltip-Background",
     edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
     edgeSize = 8,
-  -- tile = true,
-  -- tileSize = 16,
     insets = { left = 1, right =1, top = 1, bottom = 1 },
   })
--- frame:SetBackdropBorderColor(1, 1, 1)
--- frame:SetBackdropColor(24 / 255, 24 / 255, 24 / 255)
-  -- frame:SetBackdropColor(0, 0, 0, .4)
 end
 
 local WidgetFactory = {}
@@ -84,11 +76,13 @@ function WidgetFactory:hide ()
     aag:Stop()
     aag:Finish()
     aa1:SetScript("OnFinished", nil)
+    self.queue:del(self.store.name)
 end
 
 local function barStyle(name)
+  log(name..username)
   if name == username then
-    return 0.1, 0.7, 0.6, .7
+    return 102/255, 153/255, 153/255, .7
   else
     return 0.09, 0.61, 0.55, .6
   end
@@ -159,7 +153,6 @@ function WidgetFactory:show(index)
     -- prog:SetSize(progress_width, ht - b_height)
     local stat, err = pcall(function()
       self:hide()
-      self.queue.del(name)
     end)
     if not stat then log(err) end
   end)
@@ -178,38 +171,18 @@ function parseStartSpell(...)
 end
 
 function progresStyle (uname)
-  -- local ctable = RAID_CLASS_COLORS[userclass]
-  -- prog:SetColorTexture(ctable.r, ctable.g, ctable.b)
-  return 0.09, 0.61, 0.55, 1
+  log(uname..username)
+  if uname == username then
+    return 0.09, 0.61, 0.55, 1
+  end
+  return 0.2, 0.7, 0.7, 1
 end
 function nameplateStyle(uname)
   return uname, .8, .8, .8, .9;
 end
 
-local Queue = {}
-Queue.data = {}
-Queue.map = {}
 local function compare(a, b)
   return a.weight < b.weight
-end
-function Queue.insert(name, weight, widget)
-  -- delay display
-  local size = table.getn(Queue.data)
-  log('size:', size)
-  if not Queue.map[name] then
-    local ite = { name=name, weight=weight, widget=widget }
-    table.insert(Queue.data, ite);
-    Queue.map[name] = ite
-    log('insert_toqueque')
-    widget:show()
-  end
-  table.sort(Queue.data, compare)
-  log('---start')
-  for i, item in ipairs(Queue.data) do
-    item.widget:pos(i)
-    log('is'..item.name)
-  end
-  log('---end')
 end
 
 local function indexIs(list, name)
@@ -221,17 +194,45 @@ local function indexIs(list, name)
   return 0
 end
 
-function Queue.del(name)
-  local inx = indexIs(Queue.data, name)
-  if inx > 0 then
-    table.remove(Queue.data, inx)
-    log('remove-queue:', name)
-  end
-  Queue.map[name] = nil
-  table.sort(Queue.data, compare)
-  for i, item in ipairs(Queue.data) do
+local Queue = {}
+function Queue:create(addon)
+  local o = {}
+  setmetatable(o, { __index = self })
+  o.data = {}
+  o.map = {}
+  o.addon = addon
+  return o
+end
+function Queue:redraw()
+  table.sort(self.data, compare)
+  local size = table.getn(self.data)
+  for i, item in ipairs(self.data) do
     item.widget:pos(i)
   end
+  local heigth = profile.ht * size + profile.v_padding * 2 + 6
+  self.addon:SetSize(profile.width, heigth)
+end
+function Queue:insert(name, weight, widget)
+  -- delay display
+  local size = table.getn(self.data)
+  -- log('size:', size)
+  if not self.map[name] then
+    local ite = { name=name, weight=weight, widget=widget }
+    table.insert(self.data, ite);
+    self.map[name] = ite
+    widget:show()
+  end
+  self:redraw()
+end
+
+function Queue:del(name)
+  local inx = indexIs(self.data, name)
+  if inx > 0 then
+    table.remove(self.data, inx)
+    -- log('remove-queue:', name)
+  end
+  self.map[name] = nil
+  self:redraw()
 end
 
 local cache = {}
@@ -239,41 +240,38 @@ function Prist:create ()
   local o = {}
   setmetatable(o, { __index = self })
   o.addon = CreateFrame('Frame',nil,UIParent)
-  o.addon:SetSize(242, 400)
+  o.addon:SetSize(242, 50)
+  o.queue = Queue:create(o.addon)
   return o
 end
 function Prist:loadOne(name)
   if cache[name] then
     return cache[name]
   end
-  cache[name] = WidgetFactory:create(self.addon, Queue)
+  cache[name] = WidgetFactory:create(self.addon, self.queue)
   return cache[name]
 end
 function Prist:startSpell(...)
   local ts, _, _, _, name = ...
   local icont, sid, sname, castTime = parseStartSpell(...)
-  -- print(icont, sid, sname, castTime, name, ts)
   if not castTime then
     return
   end
-  print(icont, sid, sname, castTime, name, ts)
-  -- local finishTime = castTime / 1000 + ts
-  -- print(finishTime)
-  log('start', name)
   local ppp = self:loadOne(name)
   ppp:init({ name=name, icon = icont, castTime = castTime})
   local weight = castTime / 1000 + ts
-  Queue.insert(name, weight, ppp)
+  self.queue:insert(name, weight, ppp)
 end
 
 function Prist:interruptSpell(...)
   local _, _, _, _, name = ...
-  if name == profile.username then
-    log('userdis')
-  else
-    log('partnerdis')
-  end
-  -- view({...})
+  -- if name == profile.username then
+  --   log('userdis')
+  -- else
+  --   log('partnerdis')
+  -- end
+  local ppp = self:loadOne(name)
+  ppp:hide()
 end
 
 function Prist:finishSpell(...)
@@ -294,7 +292,6 @@ end
 
 function Prist:CLGCEI(...)
   local ts, type = ...
-  -- print(ts, type)
   local that = self
   if type == 'SPELL_CAST_START' then
     local stat, err = pcall(function(...) self:startSpell(...) end, ...)

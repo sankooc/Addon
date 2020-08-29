@@ -40,7 +40,9 @@ function main:UNIT_SPELLCAST_SENT(...)
   f:init(...)
 end
 
-function main:UNIT_SPELLCAST_INTERRUPTED()
+function main:UNIT_SPELLCAST_INTERRUPTED(...)
+  -- local unit, uname, castGUID, spellID = ...
+  -- print('dd', unit, castGUID, spellID)
 end
 function main:COMBAT_LOG_EVENT_UNFILTERED()
   f:CLGCEI(CombatLogGetCurrentEventInfo())
