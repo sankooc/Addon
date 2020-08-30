@@ -2,11 +2,11 @@
 ## Title: Prist
 ## Title-zhCN: 空牧师小本本
 ## Author: sankooc
-LibStub.lua
+
+lib/LibStub.lua
 lib/util.lua
 lib/option.lua
-panel.lua
-pool.lua
-Prist.lua
-
-# ui.lua
+lib/Widget.lua
+lib/Queue.lua
+lib/Prist.lua
+lib/index.lua
