@@ -2,7 +2,8 @@
 ## Title: Prist
 ## Title-zhCN: 空牧师小本本
 ## Author: sankooc
-
+## SavedVariables: Pdata
+## SavedVariablesPerCharacter: PristOption
 lib/LibStub.lua
 lib/util.lua
 lib/option.lua

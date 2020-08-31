@@ -7,7 +7,9 @@ local log = util.log
 
 local _, namespace = ...
 
-
+log('inner')
+log(_G.Pdata)
+-- _G.Pdata = {}
 
 local profile = option.getProfile()
 local loaded = false
@@ -23,11 +25,23 @@ local main = {}
 local f = prist:create()
 local addon = f.addon
 -- event define
+
+local function hand(self, event, ...)
+  if main[event] then
+      main[event](self, ...)
+  end
+end
+
 function main:ADDON_LOADED(add_name)
   if add_name == 'Prist' then
     print('addon loaded')
     loaded = true
+    -- _G.Pdata.profile = profile
+    f:update()
   end
+end
+function main:VARIABLES_LOADED()
+  log('VARIABLES_LOADED')
 end
 
 function main:UNIT_SPELLCAST_SENT(...)
@@ -44,18 +58,8 @@ function main:COMBAT_LOG_EVENT_UNFILTERED()
     f:CLGCEI(CombatLogGetCurrentEventInfo())
   end
 end
-for k,v in pairs(main) do
-  addon:RegisterEvent(k)
-end
 
-local function hand(self, event, ...)
-  if main[event] then
-      main[event](self, ...)
-  end
-end
 
-addon:SetScript("OnEvent", hand)
-f:update()
 SLASH_PRIST1 = "/prist"
 SlashCmdList["PRIST"] = function(msg)
   if msg == 'show' then
@@ -66,3 +70,9 @@ SlashCmdList["PRIST"] = function(msg)
     addon:Hide()
   end
 end
+
+
+for k,v in pairs(main) do
+  addon:RegisterEvent(k)
+end
+addon:SetScript("OnEvent", hand)
